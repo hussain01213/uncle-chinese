@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>UNCLE | Imperial Dining Menu</title>
+  <meta name="description" content="Explore the Imperial Menu at UNCLE — curated Cantonese and Szechuan masterpieces refined for the modern epicurean. From signature Peking Duck to handmade dim sum."/>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link rel="stylesheet" href="/css/styles.css"/>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#ffb4a8", "primary-container": "#8b0000",
+            "on-primary": "#690000", "on-primary-container": "#ff907f",
+            "secondary": "#e9c349", "secondary-container": "#af8d11",
+            "surface": "#131313", "surface-dim": "#131313",
+            "surface-container-lowest": "#0e0e0e",
+            "surface-container-low": "#1c1b1b",
+            "surface-container": "#201f1f",
+            "surface-container-high": "#2a2a2a",
+            "surface-container-highest": "#353534",
+            "on-surface": "#e5e2e1", "on-surface-variant": "#e3beb8",
+            "on-background": "#e5e2e1", "background": "#131313",
+            "outline": "#aa8984", "outline-variant": "#5a403c",
+            "on-primary-fixed-variant": "#920703"
+          },
+          fontFamily: { "headline": ["Noto Serif"], "body": ["Manrope"], "label": ["Manrope"] },
+          borderRadius: { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" }
+        }
+      }
+    }
+  </script>
+  <style>
+    .glass-card { background: rgba(42, 42, 42, 0.4); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+    .tonal-depth-shift { background: linear-gradient(180deg, rgba(139,0,0,0.05) 0%, rgba(19,19,19,0) 100%); }
+  </style>
+</head>
+<body class="bg-background text-on-surface font-body">
+
+<!-- Navigation -->
+<nav class="site-nav glass-nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-logo">UNCLE</a>
+    <div class="nav-links">
+      <a href="/" class="nav-link">Home</a>
+      <a href="/menu" class="nav-link active">Menu</a>
+      <a href="/reservations" class="nav-link">Reservations</a>
+    </div>
+    <div class="flex items-center gap-4">
+      <a href="/reservations" class="nav-cta">Order Now</a>
+      <button class="hamburger" id="hamburger" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</nav>
+<div class="mobile-menu" id="mobile-menu">
+  <a href="/" class="nav-link">Home</a>
+  <a href="/menu" class="nav-link active">Menu</a>
+  <a href="/reservations" class="nav-link">Reservations</a>
+</div>
+
+<main class="pt-28 pb-20 min-h-screen tonal-depth-shift px-6 md:px-12 lg:px-24">
+  <header class="mb-16 text-center max-w-3xl mx-auto">
+    <span class="font-label text-secondary tracking-[0.4em] uppercase text-xs mb-4 block">Seasonal Gastronomy</span>
+    <h1 class="font-headline text-5xl md:text-7xl font-bold mb-6 tracking-tight">The Imperial Menu</h1>
+    <p class="text-neutral-400 font-body text-lg leading-relaxed">A curated collection of traditional Cantonese and Szechuan masterpieces, refined for the modern epicurean.</p>
+  </header>
+
+  <!-- Menu is dynamically rendered by JS -->
+  <div id="menu-container" class="space-y-24 max-w-screen-2xl mx-auto">
+    <!-- Loading state -->
+    <div class="flex justify-center items-center py-32" id="menu-loading">
+      <div class="spinner" style="width:32px;height:32px;border-width:3px"></div>
+      <span class="ml-4 text-outline tracking-widest uppercase text-sm">Loading Menu...</span>
+    </div>
+  </div>
+</main>
+
+<!-- Footer -->
+<footer class="site-footer">
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-8 px-12 py-16 w-full text-center max-w-screen-2xl mx-auto">
+    <div>
+      <div class="font-headline text-lg text-yellow-500 mb-4">UNCLE Imperial Dining</div>
+      <p class="font-headline text-xs tracking-wide leading-relaxed text-neutral-500">Authentic heritage recipes meets modern culinary artistry. Experience the dynasty of flavors.</p>
+    </div>
+    <div class="flex flex-col gap-3">
+      <h4 class="text-red-800 dark:text-red-700 font-bold uppercase text-[10px] tracking-widest mb-2">Quick Access</h4>
+      <a class="text-neutral-500 hover:text-red-500 transition-colors font-headline text-xs" href="/">Home</a>
+      <a class="text-neutral-500 hover:text-red-500 transition-colors font-headline text-xs" href="/reservations">Reservations</a>
+    </div>
+    <div class="flex flex-col justify-center items-center md:items-end">
+      <p class="font-headline text-xs tracking-wide leading-relaxed text-neutral-500 mb-4">© 2024 UNCLE Imperial Dining. All Rights Reserved.</p>
+    </div>
+  </div>
+</footer>
+
+<script src="/js/nav.js"></script>
+<script>
+(async function () {
+  const container = document.getElementById('menu-container');
+  const loading = document.getElementById('menu-loading');
+
+  let menuItems = [];
+  try {
+    const res = await fetch('/api/menu');
+    const json = await res.json();
+    menuItems = json.data;
+  } catch (e) {
+    loading.innerHTML = '<p class="text-primary text-center">Failed to load menu. Please refresh.</p>';
+    return;
+  }
+
+  loading.remove();
+
+  // Group by category
+  const categories = {};
+  menuItems.forEach(d => {
+    if (!categories[d.category]) categories[d.category] = [];
+    categories[d.category].push(d);
+  });
+
+  const categoryOrder = ['Imperial Signature', 'Appetizers', 'Meat Specialties', 'Seafood', 'Soups', 'Desserts'];
+
+  categoryOrder.forEach(cat => {
+    if (!categories[cat]) return;
+    const dishes = categories[cat];
+    const section = document.createElement('section');
+
+    if (cat === 'Imperial Signature') {
+      section.innerHTML = `
+        <div class="flex items-center gap-4 mb-10">
+          <h2 class="font-headline text-3xl font-bold">${cat}</h2>
+          <div class="h-[1px] flex-grow bg-outline-variant/20"></div>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          ${dishes.map(d => `
+            <a href="/dish/${d.id}" class="group relative overflow-hidden rounded-xl h-[500px] border border-outline-variant/10 block">
+              ${d.image ? `<img class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" src="${d.image}" alt="${d.name}"/>` : '<div class="absolute inset-0 bg-surface-container"></div>'}
+              <div class="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent"></div>
+              <div class="absolute bottom-0 left-0 p-8 w-full">
+                <div class="flex justify-between items-end">
+                  <div>
+                    ${d.badge ? `<span class="inline-block px-3 py-1 ${d.badgeType === 'secondary' ? 'bg-secondary/20 border-secondary/30 text-secondary' : 'bg-primary-container/20 border-primary/30 text-primary'} border text-[10px] uppercase tracking-widest rounded-full mb-3">${d.badge}</span>` : ''}
+                    <h3 class="font-headline text-3xl font-bold mb-2">${d.name}</h3>
+                    <p class="text-neutral-300 max-w-md text-sm mb-4">${d.description}</p>
+                  </div>
+                  <div class="text-secondary font-headline text-2xl pb-4">${d.price ? '$'+d.price : '—'}</div>
+                </div>
+              </div>
+            </a>
+          `).join('')}
+        </div>`;
+    } else if (cat === 'Appetizers') {
+      section.innerHTML = `
+        <div class="flex items-center gap-4 mb-10">
+          <h2 class="font-headline text-3xl font-bold">${cat}</h2>
+          <div class="h-[1px] flex-grow bg-outline-variant/20"></div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          ${dishes.map(d => `
+            <a href="/dish/${d.id}" class="glass-card p-6 rounded-lg border border-outline-variant/5 hover:border-secondary/20 transition-all duration-300 group block">
+              <div class="flex justify-between items-start mb-4">
+                <h3 class="font-headline text-xl font-semibold group-hover:text-secondary transition-colors ${!d.available ? 'text-neutral-500' : ''}">${d.name}</h3>
+                <span class="${d.available ? 'text-secondary' : 'text-neutral-600'} font-headline">${d.price ? '$'+d.price : '—'}</span>
+              </div>
+              <p class="${d.available ? 'text-neutral-400' : 'text-neutral-500'} text-sm leading-relaxed mb-4">${d.description}</p>
+              ${!d.available ? '<span class="text-[10px] uppercase tracking-tighter text-outline-variant font-bold px-2 py-0.5 border border-outline-variant/20 rounded">Currently Unavailable</span>' : '<div class="h-[2px] w-0 group-hover:w-full bg-secondary/30 transition-all duration-500"></div>'}
+            </a>
+          `).join('')}
+        </div>`;
+    } else if (cat === 'Meat Specialties') {
+      const icons = { 'Honey Glazed Char Siu': 'restaurant', 'Cinnabar Pepper Beef': 'local_fire_department', 'Ginger-Scallion Lamb': 'energy_savings_leaf', 'Slow-Braised Red Dynasty Beef': 'skillet' };
+      section.innerHTML = `
+        <div class="flex items-center gap-4 mb-10">
+          <h2 class="font-headline text-3xl font-bold">${cat}</h2>
+          <div class="h-[1px] flex-grow bg-outline-variant/20"></div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          ${dishes.map(d => `
+            <a href="/dish/${d.id}" class="bg-surface-container-low p-8 rounded-xl relative overflow-hidden group block">
+              <div class="relative z-10">
+                <h3 class="font-headline text-2xl font-bold mb-2">${d.name}</h3>
+                <div class="text-secondary font-headline text-lg mb-4">${d.price ? '$'+d.price : '—'}</div>
+                <p class="text-neutral-400 text-sm mb-6">${d.description}</p>
+                ${d.available ? '' : '<span class="text-[10px] uppercase tracking-widest text-primary font-bold">Seasonal · Currently Unavailable</span>'}
+                <span class="material-symbols-outlined text-primary/40 text-4xl">${icons[d.name] || 'restaurant'}</span>
+              </div>
+            </a>
+          `).join('')}
+        </div>`;
+    } else if (cat === 'Seafood' || cat === 'Soups') {
+      // Handled together below
+      return;
+    } else if (cat === 'Desserts') {
+      section.innerHTML = `
+        <div class="flex items-center gap-4 mb-10">
+          <h2 class="font-headline text-3xl font-bold">${cat}</h2>
+          <div class="h-[1px] flex-grow bg-outline-variant/20"></div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          ${dishes.map(d => `
+            <a href="/dish/${d.id}" class="flex gap-6 items-center bg-surface-container p-6 rounded-lg group block">
+              <div class="w-32 h-32 flex-shrink-0 rounded-md overflow-hidden ${d.image ? '' : 'bg-neutral-800 flex items-center justify-center'}">
+                ${d.image ? `<img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" src="${d.image}" alt="${d.name}"/>` : '<span class="material-symbols-outlined text-4xl text-neutral-600">icecream</span>'}
+              </div>
+              <div>
+                <h3 class="font-headline text-xl font-bold mb-1 group-hover:text-secondary transition-colors">${d.name}</h3>
+                <p class="text-neutral-400 text-sm mb-2">${d.description}</p>
+                <div class="text-secondary font-headline">${d.price ? '$'+d.price : '—'}</div>
+              </div>
+            </a>
+          `).join('')}
+        </div>`;
+    }
+
+    container.appendChild(section);
+  });
+
+  // Seafood & Soups side by side
+  if (categories['Seafood'] || categories['Soups']) {
+    const seaAndSoup = document.createElement('div');
+    seaAndSoup.className = 'grid grid-cols-1 lg:grid-cols-2 gap-24';
+
+    ['Seafood', 'Soups'].forEach(cat => {
+      if (!categories[cat]) return;
+      const sec = document.createElement('section');
+      sec.innerHTML = `
+        <div class="flex items-center gap-4 mb-10">
+          <h2 class="font-headline text-3xl font-bold">${cat}</h2>
+          <div class="h-[1px] flex-grow bg-outline-variant/20"></div>
+        </div>
+        <div class="space-y-8">
+          ${categories[cat].map(d => `
+            <a href="/dish/${d.id}" class="flex justify-between items-start border-b border-outline-variant/10 pb-6 group block">
+              <div class="${!d.available ? 'opacity-50' : ''}">
+                <h3 class="font-headline text-xl font-bold mb-1 ${d.available ? 'group-hover:text-secondary' : ''} transition-colors">${d.name}</h3>
+                <p class="text-neutral-400 text-sm italic">${d.description}</p>
+                ${!d.available ? '<span class="text-[9px] uppercase font-bold text-primary mt-2 block">Market Price · Unavailable</span>' : ''}
+              </div>
+              <div class="${d.available ? 'text-secondary' : 'text-neutral-600'} font-headline">${d.price ? '$'+d.price : '—'}</div>
+            </a>
+          `).join('')}
+        </div>`;
+      seaAndSoup.appendChild(sec);
+    });
+    // Insert before desserts (last child)
+    const dessertSection = container.lastElementChild;
+    container.insertBefore(seaAndSoup, dessertSection);
+  }
+})();
+</script>
+</body>
+</html>

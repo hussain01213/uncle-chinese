@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>UNCLE | Imperial Modern Dining</title>
+  <meta name="description" content="UNCLE — Imperial Modern Dining. Redefining the essence of Imperial flavours through a lens of modern architectural minimalism. Reserve your table today."/>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link rel="stylesheet" href="/css/styles.css"/>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#ffb4a8", "primary-container": "#8b0000",
+            "on-primary": "#690000", "on-primary-container": "#ff907f",
+            "secondary": "#e9c349", "secondary-container": "#af8d11",
+            "surface": "#131313", "surface-dim": "#131313",
+            "surface-container-lowest": "#0e0e0e",
+            "surface-container-low": "#1c1b1b",
+            "surface-container": "#201f1f",
+            "surface-container-high": "#2a2a2a",
+            "surface-container-highest": "#353534",
+            "on-surface": "#e5e2e1", "on-surface-variant": "#e3beb8",
+            "on-background": "#e5e2e1", "background": "#131313",
+            "outline": "#aa8984", "outline-variant": "#5a403c",
+            "tertiary": "#cdc6b8", "on-primary-fixed-variant": "#920703"
+          },
+          fontFamily: { "headline": ["Noto Serif"], "body": ["Manrope"], "label": ["Manrope"] },
+          borderRadius: { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-background text-on-background">
+
+<!-- Navigation -->
+<nav class="site-nav glass-nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-logo">UNCLE</a>
+    <div class="nav-links">
+      <a href="/" class="nav-link active">Home</a>
+      <a href="/menu" class="nav-link">Menu</a>
+      <a href="/reservations" class="nav-link">Reservations</a>
+    </div>
+    <div class="flex items-center gap-4">
+      <a href="/reservations" class="nav-cta">Order Now</a>
+      <button class="hamburger" id="hamburger" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</nav>
+<div class="mobile-menu" id="mobile-menu">
+  <a href="/" class="nav-link active">Home</a>
+  <a href="/menu" class="nav-link">Menu</a>
+  <a href="/reservations" class="nav-link">Reservations</a>
+</div>
+
+<main>
+  <!-- Hero Section -->
+  <section class="relative min-h-screen flex items-center pt-20 overflow-hidden">
+    <div class="absolute inset-0 z-0">
+      <div class="absolute inset-0 bg-gradient-to-r from-background via-background/40 to-transparent z-10"></div>
+      <img class="w-full h-full object-cover scale-105 opacity-60" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAnLk4MkCbjyU9nXUvsw9ZS9dFv9vX1AZfeUbPlgWZWOHLYsF24Jd7Ib6PPbG7LvVkECPJy_NZ0D8i3wfCHzzC1Wpm4Hm9-Yc4VCxcWyxjGTJS_t-Y3eolQhf-QwECSCxVp4Ep7XCYgElM7hpIXb8EjCJah4uCGdmmZKxOhGwK3tqQf0zrAOb5OxneTXgk331fAXCLr-zsT199_4hGGJ8xUjHpRxnd32R-rUgoVKxkETssgFNuM-cSoyU1endedM0cSiXATqogB54c" alt="Cinematic moody atmosphere of a luxury Chinese dining room"/>
+    </div>
+    <div class="container mx-auto px-8 relative z-20">
+      <div class="max-w-4xl">
+        <p class="section-eyebrow mb-6">EST. 1988 — BEIJING HERITAGE</p>
+        <h1 class="font-headline text-6xl md:text-8xl lg:text-9xl leading-[0.9] font-bold mb-8 tracking-tighter">
+          The Silent <br/>
+          <span class="text-primary-container drop-shadow-sm">Dynasty</span>
+        </h1>
+        <p class="font-body text-xl text-on-surface-variant max-w-xl mb-12 leading-relaxed">
+          Redefining the essence of Imperial flavors through a lens of modern architectural minimalism. A sanctuary where tradition whispers and excellence resonates.
+        </p>
+        <div class="flex flex-col sm:flex-row gap-6">
+          <a href="/reservations" class="btn-primary">Reserve a Table</a>
+          <a href="/menu" class="btn-secondary">View Menu</a>
+        </div>
+      </div>
+    </div>
+    <!-- Floating visual element -->
+    <div class="absolute right-[-5%] bottom-[10%] hidden lg:block w-1/3 aspect-square border-[0.5px] border-secondary/10 p-8">
+      <img class="w-full h-full object-cover grayscale-[0.3] hover:grayscale-0 transition-all duration-700" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAUGz2_SVoPxz11Qg_Rk8jP8-PHIBdETtQ25ZBEtOiUolhv6P5_hyOQ9MmuGqdK81hs_nZ92pQFwtU8_HGkgTGcxW7OxsO9nGwlR2aa5pGr3GQtlwiRvTxPRmYw7wefV6al1ynlSlVZcCtNE6TWnFsRFYI4tozl1OhddKWZvtVLsaX-HCGwCEXK-mOk6gd-THTvPw7kwTRXUqhiri3oLajGumcgvYviQ5-WRaB6vzZz05eMUhbrNJs9AJw97aIvXU17MmibBx6IXPk" alt="Exquisite plating of a signature dim sum dish"/>
+    </div>
+  </section>
+
+  <!-- Storytelling Section -->
+  <section class="py-32 bg-surface">
+    <div class="container mx-auto px-8">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
+        <div class="lg:col-span-5 relative">
+          <div class="aspect-[3/4] overflow-hidden bg-surface-container-low">
+            <img class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA97Y3coUOhJGDEOWK7wR2QyVLOS1g5l0bi2Cg8qxicmFBcq0R7Ehvx0irNDkNdx3T7rmv2SAa-zMurPQ7rnumGPVQZzUhwI0eYWHg8f5GhBDHseIeWPlSdEsFWjThZ3-IowzSGAhkmsFwL5MhPNb2jdc9W3tsFgNxfA1ltQp7zNjvv77Kg1rC-tmHU1MvuRrPFLFH1C90qrHxWQneOvPH-p8INzh5PM9vHfcjykBCXysonYF0eCDoMARDzBPZw8HxSunstEYp-Kd4" alt="Chef precisely garnishing an Imperial style dish"/>
+          </div>
+          <div class="absolute -bottom-10 -right-10 w-2/3 aspect-square border-8 border-background bg-surface-container p-4 hidden md:block">
+            <img class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAMi_ec7dO9gzgnJOnXk3DS9IrZvHgfrArVPWBzVRcSx_4S9iylKx1DOoFMWE_5VvPdMsPlSr4wVetbUJBfjaxIQOGkTPUHwfZe9gN526hnaGVWanvMcWxD_LdH4ERAhWHka8G6nQF66K03y_8TrqlEKy6jHT4zmuxUCKjGAMZr-R0Xpg3KxH4eK5abTuJRSWoYUwf6f7-c5S3veCI3Cl5qqPX9pSlicb35-2yEYHW258krYuu3opw3RIE8CCnt1ztQxU_IeJglzPo" alt="Minimalist dark ceramic tea bowl"/>
+          </div>
+        </div>
+        <div class="lg:col-span-7 lg:pl-20">
+          <h2 class="font-headline text-4xl md:text-5xl lg:text-6xl mb-8 leading-tight">
+            Minimalist Soul. <br/>
+            <span class="italic text-secondary">Imperial Heart.</span>
+          </h2>
+          <div class="space-y-6 text-on-surface-variant font-body text-lg leading-relaxed max-w-2xl">
+            <p>At UNCLE, we believe that true luxury lies in the subtraction of the unnecessary. Our culinary philosophy strips back the ornate to reveal the pure soul of Beijing's heritage ingredients.</p>
+            <p>Each plate is a deliberate dialogue between ancient techniques and contemporary aesthetics. From our 48-hour cured duck to the delicate geometry of our handmade dumplings, every element is curated to honor the silence of the craft.</p>
+          </div>
+          <div class="mt-12 flex items-center gap-8">
+            <div class="text-center">
+              <span class="block font-headline text-3xl text-secondary">35+</span>
+              <span class="text-xs uppercase tracking-tighter text-outline">Years of Heritage</span>
+            </div>
+            <div class="w-[1px] h-12 bg-outline-variant/30"></div>
+            <div class="text-center">
+              <span class="block font-headline text-3xl text-secondary">12</span>
+              <span class="text-xs uppercase tracking-tighter text-outline">Private Chambers</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Curated Moments Gallery -->
+  <section class="py-32 bg-surface-container-lowest">
+    <div class="container mx-auto px-8">
+      <div class="mb-20 flex justify-between items-end">
+        <div>
+          <h3 class="font-headline text-4xl md:text-5xl mb-4">Curated Moments</h3>
+          <p class="text-outline font-body tracking-wide">A gallery of our signature experiences.</p>
+        </div>
+        <a href="/menu" class="group flex items-center gap-3 text-secondary font-label uppercase tracking-widest text-sm">
+          Discover More
+          <span class="material-symbols-outlined text-lg group-hover:translate-x-2 transition-transform">arrow_forward</span>
+        </a>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-4 grid-rows-2 gap-4 h-[800px]">
+        <div class="md:col-span-2 md:row-span-2 relative group overflow-hidden bg-surface-container">
+          <img class="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBIlLcQV8VOfNLGy4pxEgRe1CyOZsMgoLCRpHSZ5QS_5ZT54tMfV-8AskOHCnFOrslgm64aa5OFZFwoeG87rScGllpl_Kv8ZEE7FdCnl9CYJVI36KHnrvmLLE0Cjy39yVqzg-TtrYnfXe3okgWt-ct5U9-xoFIGYSUhZFHQMQ5sRUziUMqG4-IXENgB0dj40QFml-qTVZrFB0RdK-yargOVSS7UaRtb3qef0t8qP3QWsaaln1lJoGxJB1NK9D9aZsnzvD1nav_vL8k" alt="Modern minimalist restaurant interior with red accents"/>
+          <div class="absolute inset-0 bg-gradient-to-t from-neutral-950/80 to-transparent"></div>
+          <div class="absolute bottom-8 left-8">
+            <span class="inline-block px-3 py-1 rounded-full bg-secondary/20 text-secondary text-[10px] uppercase tracking-widest mb-4 border border-secondary/30">The Atmosphere</span>
+            <h4 class="font-headline text-3xl text-white">Shadow &amp; Silk</h4>
+          </div>
+        </div>
+        <div class="md:col-span-2 relative group overflow-hidden bg-surface-container">
+          <img class="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCcEiXpcipHu0vhzkgtf8BLYbiOmbANE9_WCvyHH4D0FN0D745wAo-VdzZjFlVt4J6GTgXeQSjoa3lW_u_3u7V7BwyVoCumYp2i9IrUMY51ArBMUjy_xq7GNw5CdckWD-ltLk5Kc5PxYG52pKaoihr7xuR1vx9W9OifBwryR6DOjXksD0-8qMlosuhNu5YljZ1b57Y4pUo310cs22Nkr0DEDPqHtG3nYJItbK8FnuG5JTf4xaVe6NcsxiU860ZnuDl48d_Q_jietqI" alt="Traditional Chinese tea ceremony presentation"/>
+          <div class="absolute inset-0 bg-neutral-950/40 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          <div class="absolute top-8 right-8">
+            <span class="material-symbols-outlined text-white">restaurant_menu</span>
+          </div>
+        </div>
+        <div class="md:col-span-1 relative group overflow-hidden bg-surface-container">
+          <img class="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAXJ6hh_GOdRuDfJmLR2F3EMM_d_qkbEpwO9uLPIBe1_aOB-Lxu767kPg41Kt8WE49Bs4Ox362AEDSzdQAzH3n0IupiWTq-Q25ZNlJ1Ow_giBwwKQy7vEflTD8bGJxx63LXBltlZePNJGH-eP3xXa0djbob1tuL_nLjERAchgIE374cv-1t2UfwATKL8DZSTX5Oz2QSPF7qAlEjqDrS5PnuVGnmT1RlubLk-4XHxcWSeCRZdBBkbWdyO4GVi8S8rTYRyGg4wxWthe0" alt="Vibrant healthy Asian inspired cuisine"/>
+        </div>
+        <div class="md:col-span-1 relative group overflow-hidden bg-surface-container cursor-pointer" onclick="window.location='/dish/wood-fired-peking-duck'">
+          <img class="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuABTr6Xj0KvCWMNUZOa9gA8b6Q4PjtHtoFlbgXQUOyW2t6zprMFpdmt5ER4DvH3I8JkgTnmITLvN6uf3esi5DLfn-50W5JbsnmtNV50UEOKuqUHx9hPcNvB_FNrSdMA3_iaeMbZOmWkhGS8opzqv_Py4KYRJnzy8iH-2S331auo1wfheL_MiM4x27sPGAilwaFGIJ4ZXDgPE8xVGLVxwXdhhUWnfp-oaz59oTYRncN5um_GVS2fivgqmEdJ_YlCahLcP3CT688ggmg" alt="Artistic food photography of a single dumpling"/>
+          <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+            <div class="w-12 h-12 rounded-full border border-white/50 flex items-center justify-center text-white">
+              <span class="material-symbols-outlined">add</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Signature Dish Spotlight -->
+  <section class="py-24 border-y border-outline-variant/10">
+    <div class="container mx-auto px-8">
+      <div class="flex flex-col md:flex-row items-center justify-between gap-12">
+        <div class="w-full md:w-1/2">
+          <div class="relative w-full aspect-video overflow-hidden shadow-2xl">
+            <img class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA2TEY3cMgwg8kxfYz1UDK7Re1nFdNb5qGDCQl_SE13QzCNmbnT2o62YDezMI58yw9lB50d9rtXE6Uq-ZYdouLnlerws9KctTr1Z6vVWuuNoO3_hORUON3jXZqONARArHelaY2tguHlXmA5nAtBFtK6JfLBShIKF_q0twzcXHmsnlW0buQBAi71b6Zy73ORlhHPLghRuECIIA2sUyrzsCiTmSlqZSVpica3tITFxkwGefYUiIAJ349IM8oI3DGiUOKzIupE5IgH7m4" alt="Signature Peking Duck presentation"/>
+          </div>
+        </div>
+        <div class="w-full md:w-1/2">
+          <h4 class="font-label text-secondary tracking-widest uppercase text-xs mb-4">The Crown Jewel</h4>
+          <h3 class="font-headline text-4xl mb-6 italic">The Imperial Peking</h3>
+          <p class="font-body text-on-surface-variant mb-8 max-w-md">
+            Cured for 48 hours and roasted over cherry wood. Served with handmade lotus flour wraps and our secret 30-year aged hoisin.
+          </p>
+          <div class="text-secondary font-headline text-2xl mb-8">$118</div>
+          <a href="/dish/wood-fired-peking-duck" class="btn-gold">Learn About the Process</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- Footer -->
+<footer class="site-footer">
+  <div class="max-w-screen-2xl mx-auto px-12 pt-20 pb-10">
+    <!-- Newsletter -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-20">
+      <div>
+        <h5 class="font-headline text-3xl mb-4">Join the Inner Circle</h5>
+        <p class="text-neutral-500 font-body">Exclusive tasting event invitations and heritage stories.</p>
+      </div>
+      <form id="newsletter-form" class="flex w-full max-w-md ml-auto">
+        <input id="newsletter-email" class="bg-transparent border-b border-outline-variant/30 text-on-surface font-label text-xs tracking-widest p-3 focus:outline-none focus:border-secondary w-full uppercase" placeholder="YOUR EMAIL ADDRESS" type="email"/>
+        <button type="submit" class="ml-4 text-secondary hover:text-white transition-colors">
+          <span class="material-symbols-outlined">send</span>
+        </button>
+      </form>
+    </div>
+    <!-- Footer Links -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 w-full text-center py-16 bg-neutral-900 rounded-t-xl">
+      <div class="flex flex-col items-center">
+        <span class="font-headline text-lg text-yellow-500 mb-6">UNCLE</span>
+        <p class="font-headline text-xs tracking-wide leading-relaxed text-neutral-500 max-w-[200px]">Architectural flavors inspired by the Forbidden City.</p>
+      </div>
+      <div class="flex flex-col gap-4">
+        <h6 class="font-label text-white uppercase tracking-widest text-[10px] mb-2">Navigate</h6>
+        <a class="font-headline text-xs tracking-wide text-neutral-500 hover:text-red-500 transition-colors" href="/">Home</a>
+        <a class="font-headline text-xs tracking-wide text-neutral-500 hover:text-red-500 transition-colors" href="/menu">Menu</a>
+        <a class="font-headline text-xs tracking-wide text-neutral-500 hover:text-red-500 transition-colors" href="/reservations">Reservations</a>
+      </div>
+      <div class="flex flex-col gap-4">
+        <h6 class="font-label text-white uppercase tracking-widest text-[10px] mb-2">Locate</h6>
+        <p class="font-headline text-xs tracking-wide leading-relaxed text-neutral-500 opacity-80">
+          Sanlitun North Road, No. 11<br/>Chaoyang District, Beijing
+        </p>
+      </div>
+    </div>
+    <div class="pt-8 pb-12 border-t border-neutral-800 text-center">
+      <p class="font-headline text-xs tracking-wide leading-relaxed text-neutral-600">© 2024 UNCLE Imperial Dining. All Rights Reserved.</p>
+    </div>
+  </div>
+</footer>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script src="/js/nav.js"></script>
+<script>
+  // Newsletter subscription
+  document.getElementById('newsletter-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('newsletter-email').value;
+    try {
+      const res = await fetch('/api/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      const data = await res.json();
+      showToast(data.message || 'Welcome to the Inner Circle.', 'success');
+      e.target.reset();
+    } catch {
+      showToast('Something went wrong. Please try again.', 'error');
+    }
+  });
+
+  function showToast(msg, type = 'success') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = `toast ${type}`;
+    setTimeout(() => t.classList.add('show'), 10);
+    setTimeout(() => t.classList.remove('show'), 4000);
+  }
+</script>
+</body>
+</html>

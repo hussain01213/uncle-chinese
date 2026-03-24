@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>UNCLE | Table Reservations</title>
+  <meta name="description" content="Reserve your seat at UNCLE Imperial Dining. Secure your table for an unforgettable imperial culinary experience in Beijing."/>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link rel="stylesheet" href="/css/styles.css"/>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#ffb4a8", "primary-container": "#8b0000",
+            "on-primary": "#690000", "on-primary-container": "#ff907f",
+            "secondary": "#e9c349", "secondary-container": "#af8d11",
+            "surface": "#131313",
+            "surface-container-lowest": "#0e0e0e",
+            "surface-container-low": "#1c1b1b",
+            "surface-container": "#201f1f",
+            "surface-container-high": "#2a2a2a",
+            "surface-container-highest": "#353534",
+            "on-surface": "#e5e2e1", "on-surface-variant": "#e3beb8",
+            "on-background": "#e5e2e1", "background": "#131313",
+            "outline": "#aa8984", "outline-variant": "#5a403c"
+          },
+          fontFamily: { "headline": ["Noto Serif"], "body": ["Manrope"], "label": ["Manrope"] },
+          borderRadius: { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-background text-on-surface font-body">
+
+<!-- Navigation -->
+<nav class="site-nav glass-nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-logo">UNCLE</a>
+    <div class="nav-links">
+      <a href="/" class="nav-link">Home</a>
+      <a href="/menu" class="nav-link">Menu</a>
+      <a href="/reservations" class="nav-link active">Reservations</a>
+    </div>
+    <div class="flex items-center gap-4">
+      <a href="/reservations" class="nav-cta">Order Now</a>
+      <button class="hamburger" id="hamburger" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</nav>
+<div class="mobile-menu" id="mobile-menu">
+  <a href="/" class="nav-link">Home</a>
+  <a href="/menu" class="nav-link">Menu</a>
+  <a href="/reservations" class="nav-link active">Reservations</a>
+</div>
+
+<main class="pt-32 pb-24 px-6 md:px-12 max-w-7xl mx-auto">
+  <!-- Header -->
+  <header class="mb-16 text-center md:text-left">
+    <h1 class="font-headline text-5xl md:text-7xl mb-4 tracking-tight leading-none">
+      Table <span class="lacquer-gradient-text italic">Inquiry</span>
+    </h1>
+    <p class="text-outline uppercase tracking-[0.2em] text-sm">Secure your seat at the dynasty's table</p>
+  </header>
+
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-12">
+    <!-- Left: Reservation Steps -->
+    <div class="lg:col-span-8 space-y-12">
+
+      <!-- Step 1: Date & Time -->
+      <section class="bg-surface-container-low p-8 rounded-xl relative overflow-hidden">
+        <div class="flex items-center gap-4 mb-8">
+          <span class="font-headline text-4xl text-secondary opacity-50">01</span>
+          <h2 class="font-headline text-2xl uppercase tracking-wider">Date &amp; Time Selection</h2>
+        </div>
+        <div class="grid md:grid-cols-2 gap-12">
+          <!-- Calendar -->
+          <div class="space-y-4">
+            <div class="flex justify-between items-center mb-4">
+              <span class="font-headline text-lg" id="cal-month-label">—</span>
+              <div class="flex gap-2">
+                <button id="cal-prev" class="p-2 bg-surface-container-high rounded-full hover:bg-primary-container transition-colors">
+                  <span class="material-symbols-outlined text-sm">chevron_left</span>
+                </button>
+                <button id="cal-next" class="p-2 bg-surface-container-high rounded-full hover:bg-primary-container transition-colors">
+                  <span class="material-symbols-outlined text-sm">chevron_right</span>
+                </button>
+              </div>
+            </div>
+            <div class="grid grid-cols-7 gap-1 text-center text-[10px] text-outline uppercase tracking-tighter mb-2">
+              <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+            </div>
+            <div class="grid grid-cols-7 gap-2" id="cal-grid"></div>
+            <input type="hidden" id="selected-date" name="date"/>
+          </div>
+          <!-- Time Slots -->
+          <div class="space-y-6">
+            <h3 class="text-xs uppercase tracking-widest text-outline">Available Seating</h3>
+            <div class="grid grid-cols-2 gap-3" id="time-slots">
+              <!-- Rendered by JS -->
+            </div>
+            <input type="hidden" id="selected-time" name="time"/>
+          </div>
+        </div>
+      </section>
+
+      <!-- Step 2: Guest Details -->
+      <section class="bg-surface-container-low p-8 rounded-xl" id="guest-section">
+        <div class="flex items-center gap-4 mb-8">
+          <span class="font-headline text-4xl text-secondary opacity-50">02</span>
+          <h2 class="font-headline text-2xl uppercase tracking-wider">Guest Details</h2>
+        </div>
+        <form id="reservation-form" class="grid md:grid-cols-2 gap-8">
+          <div class="form-field">
+            <label for="guest-name">Full Name</label>
+            <input id="guest-name" name="name" type="text" placeholder="Your full name" required/>
+          </div>
+          <div class="form-field">
+            <label for="guest-count">Guest Count</label>
+            <select id="guest-count" name="guests" required>
+              <option value="">Select...</option>
+              <option value="1 Guest">1 Guest</option>
+              <option value="2 Guests">2 Guests</option>
+              <option value="3 Guests">3 Guests</option>
+              <option value="4 Guests">4 Guests</option>
+              <option value="6 Guests">6 Guests</option>
+              <option value="Private Dining (8+)">Private Dining (8+)</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label for="guest-phone">Phone Number</label>
+            <input id="guest-phone" name="phone" type="tel" placeholder="+86 000 0000 0000" required/>
+          </div>
+          <div class="form-field">
+            <label for="guest-email">Email (optional)</label>
+            <input id="guest-email" name="email" type="email" placeholder="your@email.com"/>
+          </div>
+          <div class="form-field">
+            <label for="guest-occasion">Occasion</label>
+            <select id="guest-occasion" name="occasion">
+              <option value="Casual Dining">Casual Dining</option>
+              <option value="Birthday">Birthday</option>
+              <option value="Anniversary">Anniversary</option>
+              <option value="Business Dinner">Business Dinner</option>
+            </select>
+          </div>
+          <div class="form-field md:col-span-2">
+            <label for="guest-requests">Special Requests</label>
+            <textarea id="guest-requests" name="requests" rows="3" placeholder="Dietary requirements or seating preference..."></textarea>
+          </div>
+          <div class="md:col-span-2 pt-4">
+            <button id="submit-btn" class="btn-primary w-full md:w-auto" type="submit">
+              <span class="material-symbols-outlined mr-2">event_seat</span>
+              Complete Reservation
+            </button>
+            <p class="text-outline text-xs mt-3 tracking-wide" id="form-hint">Please select a date and time slot above first.</p>
+          </div>
+        </form>
+      </section>
+
+      <!-- Confirmation Card (hidden until success) -->
+      <section class="border-2 border-secondary/20 p-8 rounded-xl bg-surface-container shadow-2xl relative overflow-hidden hidden" id="confirmation-card">
+        <div class="absolute -top-12 -right-12 w-48 h-48 bg-primary-container/20 rounded-full blur-3xl"></div>
+        <div class="flex flex-col items-center text-center space-y-6 relative z-10">
+          <div class="w-20 h-20 bg-secondary/10 flex items-center justify-center rounded-full">
+            <span class="material-symbols-outlined text-secondary text-4xl" style="font-variation-settings:'FILL' 1">verified</span>
+          </div>
+          <div class="space-y-2">
+            <h2 class="font-headline text-3xl">Table Confirmed</h2>
+            <p class="text-outline text-sm">A digital scroll has been sent to your device.</p>
+          </div>
+          <div class="bg-surface-container-highest p-6 rounded w-full max-w-sm border-t-4 border-secondary">
+            <div class="flex justify-between text-[10px] uppercase tracking-widest text-outline mb-4">
+              <span>Reference ID</span><span>Status</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="font-headline text-2xl tracking-tighter" id="confirm-ref">—</span>
+              <span class="px-2 py-1 bg-secondary/20 text-secondary text-[10px] font-bold rounded">CONFIRMED</span>
+            </div>
+            <div class="mt-4 text-left space-y-1 text-outline text-xs tracking-wide">
+              <div><span class="text-on-surface font-semibold" id="confirm-name">—</span></div>
+              <div id="confirm-details" class="text-outline">—</div>
+            </div>
+          </div>
+          <button onclick="resetForm()" class="text-secondary text-xs uppercase tracking-[0.3em] font-bold border-b border-secondary/30 pb-1 hover:text-white transition-colors">
+            Make Another Reservation
+          </button>
+        </div>
+      </section>
+    </div>
+
+    <!-- Sidebar -->
+    <aside class="lg:col-span-4 space-y-8">
+      <div class="bg-surface-container-high p-8 rounded-xl border-l-2 border-secondary/40 sticky top-32">
+        <h3 class="font-headline text-xl mb-6 flex items-center gap-3">
+          <span class="material-symbols-outlined text-secondary">gavel</span>
+          House Protocols
+        </h3>
+        <div class="space-y-8">
+          <div class="space-y-2">
+            <h4 class="text-xs uppercase tracking-widest font-bold text-on-surface">Grace Period</h4>
+            <p class="text-sm text-outline leading-relaxed">Tables are held for 15 minutes past the reservation time. Please notify us if you are delayed.</p>
+          </div>
+          <div class="space-y-2">
+            <h4 class="text-xs uppercase tracking-widest font-bold text-on-surface">Dress Code</h4>
+            <p class="text-sm text-outline leading-relaxed">Smart elegant. We kindly request no sportswear, flip-flops, or baseball caps.</p>
+          </div>
+          <div class="space-y-2">
+            <h4 class="text-xs uppercase tracking-widest font-bold text-on-surface">Cancellations</h4>
+            <p class="text-sm text-outline leading-relaxed">Please cancel at least 24 hours in advance. No-shows may be subject to a nominal fee per guest.</p>
+          </div>
+          <div class="pt-6 border-t border-outline-variant/20">
+            <div class="flex items-center gap-4 text-xs text-secondary font-semibold">
+              <span class="material-symbols-outlined text-lg">call</span>
+              <span>+86 (10) 8888 9999</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="relative h-64 rounded-xl overflow-hidden group">
+        <img alt="Private Dining Room" class="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCtpitz2aXUGc35YDLuZic5nAv_UxDH8A4wKFu36EZzBpooAyHsJTlY_8Ufqc3-gVcnsH4qLxwGu_VUvtyoNmQi-M24YtxR1HVmIbUMVH16-HzTztBB57bSvDST5K7EIqkbUz_XoogKnnfYFTw3t3Tjt6VLEmuashgTE9swP2uEKbtmAkYR67hzdDiV37-3IhfYEW9BIYXmS_4c0sxLMADmQH9y28GvxSUKXzjQZedtD1CKFgLKELgYUFwjuXc59P-g5JgyryohbmA"/>
+        <div class="absolute inset-0 bg-gradient-to-t from-black to-transparent"></div>
+        <div class="absolute bottom-6 left-6">
+          <p class="text-white font-headline text-lg">Imperial Room</p>
+          <p class="text-secondary text-[10px] uppercase tracking-widest">Available for buyout</p>
+        </div>
+      </div>
+    </aside>
+  </div>
+</main>
+
+<!-- Footer -->
+<footer class="site-footer">
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-8 px-12 py-16 w-full text-center">
+    <div class="space-y-4">
+      <div class="font-headline text-lg text-yellow-500 uppercase tracking-widest">UNCLE</div>
+      <p class="font-headline text-xs tracking-wide leading-relaxed text-neutral-500">Traditional Essence. Modern Perspective. The pinnacle of Imperial Dining.</p>
+    </div>
+    <div class="flex flex-col space-y-3">
+      <a class="font-headline text-xs tracking-wide text-neutral-500 hover:text-red-500 transition-colors" href="/">Home</a>
+      <a class="font-headline text-xs tracking-wide text-neutral-500 hover:text-red-500 transition-colors" href="/menu">Menu</a>
+    </div>
+    <div class="flex flex-col justify-end">
+      <p class="font-headline text-xs tracking-wide leading-relaxed text-neutral-500 opacity-80">© 2024 UNCLE Imperial Dining. All Rights Reserved.</p>
+    </div>
+  </div>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script src="/js/nav.js"></script>
+<script>
+// ─── Calendar Logic ───────────────────────────────────────────────────────────
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const TIMES = ['18:00','18:30','19:00','19:15','19:30','20:00','20:30','21:00'];
+const UNAVAILABLE_TIMES = new Set(['21:00']);
+
+let viewYear, viewMonth, selectedDate = null, selectedTime = null;
+
+function initCalendar() {
+  const now = new Date();
+  viewYear = now.getFullYear();
+  viewMonth = now.getMonth();
+  renderCalendar();
+  renderTimes();
+}
+
+function renderCalendar() {
+  const label = document.getElementById('cal-month-label');
+  label.textContent = `${MONTHS[viewMonth]} ${viewYear}`;
+
+  const grid = document.getElementById('cal-grid');
+  grid.innerHTML = '';
+
+  const firstDay = new Date(viewYear, viewMonth, 1).getDay();
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  // Empty cells before first day
+  for (let i = 0; i < firstDay; i++) {
+    const empty = document.createElement('div');
+    empty.className = 'cal-day empty';
+    grid.appendChild(empty);
+  }
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const date = new Date(viewYear, viewMonth, d);
+    const isPast = date < today;
+    const dateStr = `${viewYear}-${String(viewMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+
+    const el = document.createElement('div');
+    el.className = 'cal-day';
+    el.textContent = d;
+
+    if (isPast) {
+      el.classList.add('past');
+    } else {
+      if (selectedDate === dateStr) el.classList.add('selected');
+      el.addEventListener('click', () => selectDate(dateStr, el));
+    }
+    grid.appendChild(el);
+  }
+}
+
+function selectDate(dateStr, el) {
+  selectedDate = dateStr;
+  document.getElementById('selected-date').value = dateStr;
+  document.querySelectorAll('.cal-day').forEach(d => d.classList.remove('selected'));
+  el.classList.add('selected');
+  updateHint();
+}
+
+function renderTimes() {
+  const container = document.getElementById('time-slots');
+  container.innerHTML = '';
+  TIMES.forEach(t => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.textContent = t;
+    const unavail = UNAVAILABLE_TIMES.has(t);
+    btn.className = `py-3 px-4 text-sm transition-all text-center rounded ${
+      unavail
+        ? 'bg-surface-container-high border border-transparent opacity-40 cursor-not-allowed'
+        : 'bg-surface-container-high hover:border-secondary border border-transparent'
+    }`;
+    if (unavail) { btn.disabled = true; return container.appendChild(btn); }
+    btn.addEventListener('click', () => selectTime(t, btn));
+    container.appendChild(btn);
+  });
+}
+
+function selectTime(t, btn) {
+  selectedTime = t;
+  document.getElementById('selected-time').value = t;
+  document.querySelectorAll('#time-slots button:not(:disabled)').forEach(b => {
+    b.className = 'py-3 px-4 text-sm transition-all text-center rounded bg-surface-container-high hover:border-secondary border border-transparent';
+  });
+  btn.className = 'py-3 px-4 border border-secondary text-secondary bg-surface-container-highest text-sm text-center rounded';
+  updateHint();
+}
+
+function updateHint() {
+  const hint = document.getElementById('form-hint');
+  if (selectedDate && selectedTime) {
+    const d = new Date(selectedDate + 'T12:00:00');
+    hint.textContent = `Selected: ${d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})} at ${selectedTime}`;
+    hint.className = 'text-secondary text-xs mt-3 tracking-wide';
+  } else if (selectedDate) {
+    hint.textContent = 'Now select a time slot.';
+    hint.className = 'text-outline text-xs mt-3 tracking-wide';
+  } else {
+    hint.textContent = 'Please select a date and time slot above first.';
+    hint.className = 'text-outline text-xs mt-3 tracking-wide';
+  }
+}
+
+document.getElementById('cal-prev').addEventListener('click', () => {
+  viewMonth--; if (viewMonth < 0) { viewMonth = 11; viewYear--; } renderCalendar();
+});
+document.getElementById('cal-next').addEventListener('click', () => {
+  viewMonth++; if (viewMonth > 11) { viewMonth = 0; viewYear++; } renderCalendar();
+});
+
+// ─── Reservation Form ─────────────────────────────────────────────────────────
+document.getElementById('reservation-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  if (!selectedDate || !selectedTime) {
+    showToast('Please select a date and time slot first.', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('submit-btn');
+  btn.innerHTML = '<span class="spinner"></span> Confirming...';
+  btn.disabled = true;
+
+  const formData = {
+    name: document.getElementById('guest-name').value,
+    guests: document.getElementById('guest-count').value,
+    phone: document.getElementById('guest-phone').value,
+    email: document.getElementById('guest-email').value,
+    occasion: document.getElementById('guest-occasion').value,
+    requests: document.getElementById('guest-requests').value,
+    date: selectedDate,
+    time: selectedTime
+  };
+
+  try {
+    const res = await fetch('/api/reservations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(formData)
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      const msg = data.errors ? data.errors.map(e => e.msg).join(', ') : 'Reservation failed.';
+      showToast(msg, 'error');
+      btn.innerHTML = '<span class="material-symbols-outlined mr-2">event_seat</span> Complete Reservation';
+      btn.disabled = false;
+      return;
+    }
+
+    // Show confirmation
+    const d = new Date(data.data.date + 'T12:00:00');
+    document.getElementById('confirm-ref').textContent = data.data.referenceId;
+    document.getElementById('confirm-name').textContent = data.data.name;
+    document.getElementById('confirm-details').textContent =
+      `${d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})} · ${data.data.time} · ${data.data.guests}`;
+
+    document.getElementById('guest-section').classList.add('hidden');
+    document.getElementById('confirmation-card').classList.remove('hidden');
+    document.getElementById('confirmation-card').scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+  } catch {
+    showToast('Server error. Please try again.', 'error');
+    btn.innerHTML = '<span class="material-symbols-outlined mr-2">event_seat</span> Complete Reservation';
+    btn.disabled = false;
+  }
+});
+
+function resetForm() {
+  document.getElementById('reservation-form').reset();
+  document.getElementById('confirmation-card').classList.add('hidden');
+  document.getElementById('guest-section').classList.remove('hidden');
+  selectedDate = null; selectedTime = null;
+  document.getElementById('selected-date').value = '';
+  document.getElementById('selected-time').value = '';
+  renderCalendar();
+  renderTimes();
+  updateHint();
+  const btn = document.getElementById('submit-btn');
+  btn.innerHTML = '<span class="material-symbols-outlined mr-2">event_seat</span> Complete Reservation';
+  btn.disabled = false;
+}
+
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast ${type}`;
+  setTimeout(() => t.classList.add('show'), 10);
+  setTimeout(() => t.classList.remove('show'), 4500);
+}
+
+initCalendar();
+</script>
+</body>
+</html>

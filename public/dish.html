@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>UNCLE | Dish Detail</title>
+  <meta name="description" content="Discover a signature dish from UNCLE Imperial Dining — detailed flavour notes, chef's commentary, and patron reviews."/>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link rel="stylesheet" href="/css/styles.css"/>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#ffb4a8", "primary-container": "#8b0000",
+            "on-primary": "#690000", "on-primary-container": "#ff907f",
+            "secondary": "#e9c349", "secondary-container": "#af8d11",
+            "surface": "#131313", "surface-dim": "#131313",
+            "surface-container-lowest": "#0e0e0e",
+            "surface-container-low": "#1c1b1b",
+            "surface-container": "#201f1f",
+            "surface-container-high": "#2a2a2a",
+            "surface-container-highest": "#353534",
+            "on-surface": "#e5e2e1", "on-surface-variant": "#e3beb8",
+            "on-background": "#e5e2e1", "background": "#131313",
+            "outline": "#aa8984", "outline-variant": "#5a403c",
+            "primary-fixed": "#ffdad4", "on-primary-fixed": "#410000"
+          },
+          fontFamily: { "headline": ["Noto Serif"], "body": ["Manrope"], "label": ["Manrope"] },
+          borderRadius: { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" }
+        }
+      }
+    }
+  </script>
+  <style>
+    .imperial-gradient { background: radial-gradient(circle at center, #ffb4a8 0%, #8b0000 100%); }
+  </style>
+</head>
+<body class="bg-background text-on-surface font-body">
+
+<!-- Navigation -->
+<nav class="site-nav glass-nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-logo">UNCLE</a>
+    <div class="nav-links">
+      <a href="/" class="nav-link">Home</a>
+      <a href="/menu" class="nav-link active">Menu</a>
+      <a href="/reservations" class="nav-link">Reservations</a>
+    </div>
+    <div class="flex items-center gap-4">
+      <a href="/reservations" class="nav-cta">Order Now</a>
+      <button class="hamburger" id="hamburger" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</nav>
+<div class="mobile-menu" id="mobile-menu">
+  <a href="/" class="nav-link">Home</a>
+  <a href="/menu" class="nav-link active">Menu</a>
+  <a href="/reservations" class="nav-link">Reservations</a>
+</div>
+
+<main class="pt-24 pb-20 px-6 max-w-7xl mx-auto" id="dish-main">
+  <!-- Loading -->
+  <div class="flex justify-center items-center py-40" id="dish-loading">
+    <div class="spinner" style="width:32px;height:32px;border-width:3px"></div>
+    <span class="ml-4 text-outline tracking-widest uppercase text-sm">Loading...</span>
+  </div>
+</main>
+
+<!-- Footer -->
+<footer class="site-footer">
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-12 px-12 py-16 max-w-7xl mx-auto text-center md:text-left">
+    <div class="space-y-4">
+      <div class="font-headline text-lg text-yellow-500 uppercase tracking-widest">UNCLE</div>
+      <p class="font-headline text-xs tracking-wide leading-relaxed text-neutral-500">Crafting the legacy of Imperial dining for the modern palate.</p>
+    </div>
+    <div class="flex flex-col space-y-4 items-center md:items-start">
+      <h4 class="text-[10px] font-bold uppercase tracking-[0.2em] text-red-800 dark:text-red-700">Exploration</h4>
+      <a class="font-headline text-xs tracking-wide text-neutral-500 hover:text-red-500 transition-colors" href="/">Home</a>
+      <a class="font-headline text-xs tracking-wide text-neutral-500 hover:text-red-500 transition-colors" href="/menu">Menu</a>
+      <a class="font-headline text-xs tracking-wide text-neutral-500 hover:text-red-500 transition-colors" href="/reservations">Reservations</a>
+    </div>
+    <div class="space-y-4">
+      <p class="font-headline text-xs tracking-wide leading-relaxed text-neutral-500">© 2024 UNCLE Imperial Dining. All Rights Reserved.</p>
+    </div>
+  </div>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script src="/js/nav.js"></script>
+<script>
+(async function () {
+  const dishId = window.location.pathname.split('/dish/')[1];
+  const main = document.getElementById('dish-main');
+  const loading = document.getElementById('dish-loading');
+
+  let dish;
+  try {
+    const res = await fetch(`/api/menu/${dishId}`);
+    if (!res.ok) throw new Error('Not found');
+    const json = await res.json();
+    dish = json.data;
+  } catch {
+    loading.innerHTML = `<div class="text-center"><p class="font-headline text-2xl text-primary mb-4">Dish not found</p><a href="/menu" class="btn-secondary">← Back to Menu</a></div>`;
+    return;
+  }
+
+  loading.remove();
+
+  document.title = `UNCLE | ${dish.name}`;
+
+  const stars = (n, outOf = 5) => Array.from({ length: outOf }, (_, i) =>
+    `<span class="material-symbols-outlined text-sm" style="${i < n ? "font-variation-settings:'FILL' 1" : ''}">star</span>`
+  ).join('');
+
+  const spiceIcons = (level) => {
+    let h = '';
+    for (let i = 0; i < 3; i++) {
+      h += `<span class="material-symbols-outlined text-${i < level ? 'primary' : 'outline-variant'} text-sm" ${i < level ? "style=\"font-variation-settings:'FILL' 1\"" : ''}>local_fire_department</span>`;
+    }
+    return h;
+  };
+
+  const heroSection = `
+    <section class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+      <!-- Image -->
+      <div class="lg:col-span-7 relative group">
+        <div class="aspect-[4/5] overflow-hidden rounded-xl bg-surface-container-low shadow-2xl relative">
+          ${dish.image
+            ? `<img alt="${dish.name}" class="w-full h-full object-cover grayscale-[0.3] brightness-75 transition-transform duration-700 group-hover:scale-105" src="${dish.image}"/>`
+            : `<div class="w-full h-full flex items-center justify-center bg-surface-container-low"><span class="material-symbols-outlined text-9xl text-surface-container-highest">restaurant</span></div>`
+          }
+          ${!dish.available ? `
+          <div class="absolute inset-0 bg-neutral-950/60 backdrop-blur-sm flex items-center justify-center p-8 text-center z-10">
+            <div class="border-2 border-primary/40 p-8 rounded-lg max-w-md transform -rotate-3">
+              <h2 class="font-headline text-4xl font-bold text-primary mb-2 tracking-tight">Currently Unavailable</h2>
+              <p class="font-body text-sm text-on-surface-variant uppercase tracking-widest">${dish.availabilityNote || 'Seasonal'}</p>
+            </div>
+          </div>` : ''}
+        </div>
+        <div class="absolute -bottom-6 -right-6 w-48 h-48 bg-primary-container/20 rounded-full blur-3xl -z-10"></div>
+      </div>
+      <!-- Info -->
+      <div class="lg:col-span-5 space-y-10 pt-4">
+        <div class="space-y-4">
+          <nav class="flex items-center space-x-2 text-xs text-on-surface-variant/60 uppercase tracking-widest">
+            <a href="/menu" class="hover:text-secondary transition-colors">Imperial Menu</a>
+            <span class="material-symbols-outlined text-[10px]">chevron_right</span>
+            <span class="text-secondary">${dish.category}</span>
+          </nav>
+          <h1 class="font-headline text-5xl md:text-6xl font-bold text-on-surface tracking-tight leading-tight">${dish.name}</h1>
+          <div class="flex items-center justify-between">
+            <span class="font-headline text-3xl text-secondary">${dish.price ? '$' + dish.price : 'Market Price'}</span>
+            <div class="flex items-center space-x-4">
+              <div class="flex items-center space-x-1 text-secondary">${stars(5)}</div>
+              <span class="text-xs text-on-surface-variant uppercase tracking-widest font-bold">${dish.reviews.length} Chronicles</span>
+            </div>
+          </div>
+        </div>
+
+        ${dish.chefNote ? `
+        <div class="p-8 bg-surface-container-low rounded-xl border-l-4 border-primary-container relative overflow-hidden">
+          <div class="relative z-10">
+            <h3 class="font-headline text-lg text-primary-fixed mb-2 italic">Chef's Note</h3>
+            <p class="font-body text-on-surface-variant leading-relaxed italic">${dish.chefNote}</p>
+          </div>
+          <span class="material-symbols-outlined absolute -right-4 -bottom-4 text-9xl text-primary-container/10 select-none">format_quote</span>
+        </div>` : ''}
+
+        <div class="grid grid-cols-2 gap-6">
+          <div class="space-y-1">
+            <span class="text-[10px] text-on-surface-variant uppercase tracking-[0.2em] font-bold">Preparation Time</span>
+            <p class="font-headline text-lg text-on-surface">${dish.prepTime || 'N/A'}</p>
+          </div>
+          <div class="space-y-1">
+            <span class="text-[10px] text-on-surface-variant uppercase tracking-[0.2em] font-bold">Spice Level</span>
+            <div class="flex space-x-1 mt-1">${spiceIcons(dish.spiceLevel || 0)}</div>
+          </div>
+        </div>
+
+        ${dish.story ? `
+        <div class="space-y-4">
+          <h4 class="font-headline text-xl text-on-surface border-b border-outline-variant/20 pb-2">The Ritual</h4>
+          <p class="text-on-surface-variant leading-relaxed text-sm">${dish.story}</p>
+        </div>` : ''}
+
+        ${dish.available
+          ? `<a href="/reservations" class="btn-primary w-full flex items-center justify-center gap-3">
+               <span class="material-symbols-outlined">event_seat</span>
+               <span>Reserve for This Dish</span>
+             </a>`
+          : `<button class="w-full bg-surface-container-highest text-on-surface/30 py-5 rounded-lg font-headline uppercase tracking-widest text-sm flex items-center justify-center space-x-3 cursor-not-allowed" disabled>
+               <span class="material-symbols-outlined">event_busy</span>
+               <span>Out of Stock · Seasonal</span>
+             </button>`
+        }
+      </div>
+    </section>`;
+
+  const reviewsSection = dish.reviews && dish.reviews.length ? `
+    <section class="mt-32 space-y-16">
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div class="space-y-4">
+          <div class="inline-block px-4 py-1 bg-secondary-container/20 border border-secondary/30 rounded-full">
+            <span class="text-[10px] font-bold text-secondary uppercase tracking-[0.3em]">Imperial Guestbook</span>
+          </div>
+          <h2 class="font-headline text-5xl font-bold tracking-tight">Patron Chronicles</h2>
+        </div>
+        <div class="text-right">
+          <p class="text-xs text-on-surface-variant uppercase tracking-widest mb-2">Verified Authenticity</p>
+          <div class="h-1 w-32 bg-primary-container ml-auto"></div>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        ${dish.reviews.map((r, i) => `
+          <div class="p-8 ${i === 1 ? 'bg-surface-container-high border-t-2 border-secondary/20 lg:scale-105 shadow-2xl z-10' : 'bg-surface-container-low hover:bg-surface-container transition-colors duration-300'} rounded-xl space-y-6 flex flex-col justify-between">
+            <div class="space-y-4">
+              <div class="flex justify-between items-start">
+                <div class="flex flex-col">
+                  <span class="font-headline text-lg">${r.author}</span>
+                  <span class="text-[10px] text-on-surface-variant uppercase tracking-widest">${r.date}</span>
+                </div>
+                <div class="flex text-secondary scale-75 origin-right">${stars(r.rating)}</div>
+              </div>
+              <p class="${i === 1 ? 'text-on-surface font-headline text-lg italic' : 'text-on-surface-variant text-sm'} leading-relaxed">${r.text}</p>
+            </div>
+            <div class="pt-4 ${i === 1 ? 'flex items-center justify-between' : 'border-t border-outline-variant/10'}">
+              <span class="text-[10px] ${i === 1 ? 'text-secondary' : 'text-primary'} uppercase font-bold tracking-widest">${r.badge}</span>
+              ${i === 1 ? '<span class="material-symbols-outlined text-secondary/30">verified</span>' : ''}
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </section>` : '';
+
+  main.innerHTML = heroSection + reviewsSection;
+})();
+</script>
+</body>
+</html>
