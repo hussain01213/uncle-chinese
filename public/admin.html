@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>UNCLE | Admin Dashboard</title>
+  <meta name="robots" content="noindex, nofollow"/>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link rel="stylesheet" href="/css/styles.css"/>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#ffb4a8", "primary-container": "#8b0000",
+            "on-primary": "#690000", "on-primary-container": "#ff907f",
+            "secondary": "#e9c349", "secondary-container": "#af8d11",
+            "surface": "#131313", "surface-dim": "#131313",
+            "surface-container-lowest": "#0e0e0e",
+            "surface-container-low": "#1c1b1b",
+            "surface-container": "#201f1f",
+            "surface-container-high": "#2a2a2a",
+            "surface-container-highest": "#353534",
+            "on-surface": "#e5e2e1", "on-surface-variant": "#e3beb8",
+            "on-background": "#e5e2e1", "background": "#131313",
+            "outline": "#aa8984", "outline-variant": "#5a403c",
+          },
+          fontFamily: { "headline": ["Noto Serif"], "body": ["Manrope"], "label": ["Manrope"] },
+          borderRadius: { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" }
+        }
+      }
+    }
+  </script>
+  <style>
+    .glass-card { background: rgba(32,31,31,0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+    .admin-sidebar { width: 260px; flex-shrink: 0; }
+    .pill-available   { background: rgba(34,85,34,0.35); color: #6ee76e; border: 1px solid rgba(110,231,110,0.25); }
+    .pill-unavailable { background: rgba(120,20,20,0.35); color: #ffb4a8; border: 1px solid rgba(255,180,168,0.25); }
+    .dish-row { transition: background 0.2s; }
+    .dish-row:hover { background: rgba(53,53,52,0.6); }
+    .modal-bg { background: rgba(0,0,0,0.82); backdrop-filter: blur(6px); }
+    input[type=range] { accent-color: #e9c349; }
+    .spice-dot { width:8px; height:8px; border-radius:50%; display:inline-block; transition: background 0.2s; }
+    .tag-badge { font-size:9px; text-transform:uppercase; letter-spacing:0.1em; padding: 2px 8px; border-radius:3px; }
+    .sidebar-link { display:flex; align-items:center; gap:10px; padding:10px 14px; border-radius:6px; font-size:0.78rem;
+      text-transform:uppercase; letter-spacing:0.12em; color:#a3a3a3; transition:all 0.2s; cursor:pointer; }
+    .sidebar-link:hover, .sidebar-link.active { background: rgba(139,0,0,0.2); color:#ffb4a8; }
+    .stat-card { background: rgba(32,31,31,0.9); border: 1px solid rgba(90,64,60,0.18); border-radius:10px; padding:1.5rem; }
+    .search-input { background: rgba(53,53,52,0.5); border: 1px solid rgba(90,64,60,0.3); color: #e5e2e1;
+      padding: 0.55rem 1rem; border-radius:6px; font-size:0.85rem; outline:none; width:100%; transition:border-color 0.2s; }
+    .search-input:focus { border-color: rgba(233,195,73,0.5); }
+    .filter-btn { padding: 0.4rem 1rem; border-radius:5px; font-size:0.7rem; text-transform:uppercase;
+      letter-spacing:0.1em; border:1px solid rgba(90,64,60,0.3); color:#a3a3a3; background:transparent;
+      cursor:pointer; transition:all 0.2s; }
+    .filter-btn.active, .filter-btn:hover { background: rgba(139,0,0,0.25); border-color: rgba(255,180,168,0.3); color:#ffb4a8; }
+    /* Modal form fields */
+    .mfield label { font-size:0.65rem; text-transform:uppercase; letter-spacing:0.18em; color:#aa8984; display:block; margin-bottom:4px; }
+    .mfield input, .mfield select, .mfield textarea {
+      width:100%; background: rgba(53,53,52,0.6); border:none; border-bottom: 1px solid rgba(90,64,60,0.4);
+      color:#e5e2e1; padding:0.6rem 0.2rem; font-family:'Manrope',sans-serif; font-size:0.85rem;
+      outline:none; transition:border-color 0.2s; border-radius:0;
+    }
+    .mfield input:focus, .mfield select:focus, .mfield textarea:focus { border-bottom-color: #e9c349; }
+    .mfield select option { background: #201f1f; }
+    .mfield textarea { resize:vertical; min-height:70px; }
+    .toggle-switch { position:relative; width:42px; height:22px; }
+    .toggle-switch input { opacity:0; width:0; height:0; }
+    .toggle-slider { position:absolute; cursor:pointer; inset:0; background:#353534; border-radius:22px; transition:.3s; }
+    .toggle-slider::before { content:''; position:absolute; width:16px; height:16px; left:3px; bottom:3px;
+      background:#a3a3a3; border-radius:50%; transition:.3s; }
+    input:checked + .toggle-slider { background: #8b0000; }
+    input:checked + .toggle-slider::before { transform:translateX(20px); background:#ffb4a8; }
+    @keyframes slideUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+    .animate-slideUp { animation: slideUp 0.35s cubic-bezier(0.4,0,0.2,1) forwards; }
+    @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+    .animate-fadeIn { animation: fadeIn 0.25s ease forwards; }
+  </style>
+</head>
+<body class="bg-background text-on-surface font-body min-h-screen">
+
+<!-- ════ LOGIN SCREEN ════ -->
+<div id="login-screen" class="fixed inset-0 z-[200] flex items-center justify-center bg-background">
+  <div class="w-full max-w-sm px-4">
+    <div class="text-center mb-10">
+      <div class="font-headline text-4xl font-bold text-primary mb-2">UNCLE</div>
+      <p class="text-neutral-500 text-xs uppercase tracking-widest">Admin Console</p>
+    </div>
+    <div class="glass-card rounded-xl p-8 border border-outline-variant/20">
+      <div class="mfield mb-6">
+        <label>Admin Password</label>
+        <input id="pw-input" type="password" placeholder="Enter password" autocomplete="current-password"/>
+      </div>
+      <button id="login-btn" class="btn-primary w-full justify-center">
+        <span id="login-label">Access Dashboard</span>
+      </button>
+      <p id="login-err" class="text-primary text-xs text-center mt-4 hidden"></p>
+    </div>
+    <p class="text-center text-neutral-600 text-xs mt-6">
+      <a href="/" class="hover:text-neutral-400 transition-colors">← Back to website</a>
+    </p>
+  </div>
+</div>
+
+<!-- ════ MAIN DASHBOARD ════ -->
+<div id="dashboard" class="hidden flex min-h-screen">
+
+  <!-- Sidebar -->
+  <aside class="admin-sidebar bg-surface-container-lowest border-r border-outline-variant/15 flex flex-col p-4 fixed left-0 top-0 h-full z-40">
+    <div class="mb-8 mt-2 px-2">
+      <div class="font-headline text-xl font-bold text-primary">UNCLE</div>
+      <div class="text-neutral-600 text-[10px] uppercase tracking-widest mt-0.5">Admin Panel</div>
+    </div>
+    <nav class="flex flex-col gap-1 flex-grow">
+      <div class="sidebar-link active" id="nav-overview" onclick="showView('overview')">
+        <span class="material-symbols-outlined text-lg">dashboard</span> Overview
+      </div>
+      <div class="sidebar-link" id="nav-menu" onclick="showView('menu')">
+        <span class="material-symbols-outlined text-lg">menu_book</span> Menu Items
+      </div>
+      <div class="sidebar-link" id="nav-add" onclick="openAddModal()">
+        <span class="material-symbols-outlined text-lg">add_circle</span> Add Dish
+      </div>
+    </nav>
+    <div class="border-t border-outline-variant/15 pt-4 mt-4">
+      <button id="logout-btn" class="sidebar-link w-full text-left">
+        <span class="material-symbols-outlined text-lg">logout</span> Log Out
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main content -->
+  <main class="flex-1 ml-[260px] p-8 min-h-screen">
+
+    <!-- Header bar -->
+    <div class="flex justify-between items-center mb-8">
+      <div>
+        <h1 class="font-headline text-2xl font-bold" id="view-title">Dashboard Overview</h1>
+        <p class="text-neutral-500 text-xs mt-1" id="view-sub">Manage your imperial menu</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+        <span class="text-neutral-500 text-xs">Live</span>
+      </div>
+    </div>
+
+    <!-- ── VIEW: Overview ────────────────────────────────── -->
+    <div id="view-overview">
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10" id="stats-grid">
+        <!-- filled by JS -->
+      </div>
+      <div class="glass-card rounded-xl border border-outline-variant/15 p-6">
+        <h2 class="font-headline text-lg mb-4">Unavailable Dishes</h2>
+        <div id="unavailable-list" class="space-y-3">
+          <p class="text-neutral-500 text-sm">Loading...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── VIEW: Menu ────────────────────────────────────── -->
+    <div id="view-menu" class="hidden">
+      <!-- Filters & search -->
+      <div class="flex flex-wrap gap-3 items-center mb-6">
+        <input id="search-input" class="search-input max-w-xs" placeholder="Search dishes…" oninput="renderTable()"/>
+        <div id="cat-filters" class="flex flex-wrap gap-2">
+          <button class="filter-btn active" data-cat="All" onclick="setCatFilter(this)">All</button>
+        </div>
+        <button class="filter-btn ml-auto" onclick="openAddModal()" style="border-color:rgba(233,195,73,0.4);color:#e9c349;">
+          + Add Dish
+        </button>
+      </div>
+
+      <!-- Table -->
+      <div class="glass-card rounded-xl border border-outline-variant/15 overflow-hidden">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-outline-variant/15 text-neutral-500 text-[10px] uppercase tracking-widest">
+              <th class="text-left px-5 py-4">Dish</th>
+              <th class="text-left px-5 py-4 hidden md:table-cell">Category</th>
+              <th class="text-left px-5 py-4 hidden lg:table-cell">Price</th>
+              <th class="text-center px-5 py-4">Status</th>
+              <th class="text-right px-5 py-4">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="menu-table-body">
+            <tr><td colspan="5" class="text-center py-12 text-neutral-500">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="text-neutral-600 text-xs mt-3 text-right" id="table-count"></p>
+    </div>
+
+  </main>
+</div>
+
+<!-- ════ ADD / EDIT MODAL ════ -->
+<div id="dish-modal" class="fixed inset-0 z-[100] modal-bg hidden items-center justify-center p-4">
+  <div class="glass-card rounded-2xl border border-outline-variant/20 w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-slideUp">
+    <div class="flex justify-between items-center px-8 pt-7 pb-5 border-b border-outline-variant/15">
+      <h2 class="font-headline text-xl font-bold" id="modal-title">Add New Dish</h2>
+      <button onclick="closeModal()" class="text-neutral-500 hover:text-white transition-colors">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    <form id="dish-form" class="px-8 py-6 space-y-5" autocomplete="off">
+      <div class="grid grid-cols-2 gap-5">
+        <div class="mfield col-span-2">
+          <label>Dish Name *</label>
+          <input id="f-name" type="text" required placeholder="e.g. Dragon Wonton Soup"/>
+        </div>
+        <div class="mfield">
+          <label>Category *</label>
+          <select id="f-category" required>
+            <option value="">— Select —</option>
+            <option>Imperial Signature</option>
+            <option>Appetizers</option>
+            <option>Meat Specialties</option>
+            <option>Seafood</option>
+            <option>Soups</option>
+            <option>Desserts</option>
+          </select>
+        </div>
+        <div class="mfield">
+          <label>Price (USD)</label>
+          <input id="f-price" type="number" min="0" step="0.01" placeholder="e.g. 28"/>
+        </div>
+        <div class="mfield col-span-2">
+          <label>Description *</label>
+          <textarea id="f-description" required placeholder="Short appetizing description…"></textarea>
+        </div>
+        <div class="mfield">
+          <label>Prep Time</label>
+          <input id="f-prepTime" type="text" placeholder="e.g. 20 Minutes"/>
+        </div>
+        <div class="mfield">
+          <label>Spice Level (0–3)</label>
+          <input id="f-spiceLevel" type="range" min="0" max="3" value="0" oninput="document.getElementById('spice-val').textContent=this.value"/>
+          <div class="flex justify-between text-neutral-500 text-[10px] mt-1">
+            <span>None</span><span id="spice-val">0</span><span>Fiery</span>
+          </div>
+        </div>
+        <div class="mfield col-span-2">
+          <label>Image URL <span class="normal-case text-neutral-600">(optional)</span></label>
+          <input id="f-image" type="url" placeholder="https://…"/>
+        </div>
+        <div class="mfield">
+          <label>Badge Text <span class="normal-case text-neutral-600">(optional)</span></label>
+          <input id="f-badge" type="text" placeholder="e.g. Chef's Special"/>
+        </div>
+        <div class="mfield">
+          <label>Badge Style</label>
+          <select id="f-badgeType">
+            <option value="">None</option>
+            <option value="primary">Red (primary)</option>
+            <option value="secondary">Gold (secondary)</option>
+          </select>
+        </div>
+        <div class="col-span-2 flex items-center gap-4 py-3 border-t border-outline-variant/10">
+          <label class="toggle-switch">
+            <input type="checkbox" id="f-available" checked/>
+            <span class="toggle-slider"></span>
+          </label>
+          <div>
+            <div class="text-sm font-semibold">Available</div>
+            <div class="text-neutral-500 text-xs">Toggle off to mark as unavailable</div>
+          </div>
+        </div>
+        <div class="mfield col-span-2" id="avail-note-field">
+          <label>Unavailability Reason <span class="normal-case text-neutral-600">(shown to guests)</span></label>
+          <input id="f-availabilityNote" type="text" placeholder="e.g. Seasonal Ingredient Depletion"/>
+        </div>
+      </div>
+      <div class="flex justify-end gap-3 pt-4 border-t border-outline-variant/10">
+        <button type="button" onclick="closeModal()" class="btn-secondary text-xs py-2 px-6">Cancel</button>
+        <button type="submit" id="modal-submit-btn" class="btn-primary text-xs py-2 px-8">
+          <span id="modal-submit-label">Add Dish</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ════ AVAILABILITY QUICK MODAL ════ -->
+<div id="avail-modal" class="fixed inset-0 z-[100] modal-bg hidden items-center justify-center p-4">
+  <div class="glass-card rounded-2xl border border-outline-variant/20 w-full max-w-md animate-slideUp">
+    <div class="px-8 pt-7 pb-5 border-b border-outline-variant/15">
+      <h2 class="font-headline text-xl font-bold" id="avail-modal-title">Update Availability</h2>
+      <p class="text-neutral-400 text-sm mt-1" id="avail-modal-dish"></p>
+    </div>
+    <div class="px-8 py-6 space-y-5">
+      <div class="flex items-center gap-4 py-2">
+        <label class="toggle-switch">
+          <input type="checkbox" id="am-available" checked/>
+          <span class="toggle-slider"></span>
+        </label>
+        <div>
+          <div class="text-sm font-semibold">Available on menu</div>
+          <div class="text-neutral-500 text-xs">Guests will see "Currently Unavailable" if off</div>
+        </div>
+      </div>
+      <div class="mfield">
+        <label>Reason (optional)</label>
+        <input id="am-note" type="text" placeholder="e.g. Out of stock, Seasonal, Coming soon…"/>
+      </div>
+      <div class="flex justify-end gap-3 pt-2">
+        <button onclick="closeAvailModal()" class="btn-secondary text-xs py-2 px-6">Cancel</button>
+        <button id="am-save" class="btn-primary text-xs py-2 px-8">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Delete confirm -->
+<div id="delete-modal" class="fixed inset-0 z-[100] modal-bg hidden items-center justify-center p-4">
+  <div class="glass-card rounded-2xl border border-outline-variant/20 w-full max-w-sm p-8 animate-slideUp">
+    <div class="text-center mb-6">
+      <span class="material-symbols-outlined text-primary text-5xl">delete_forever</span>
+      <h2 class="font-headline text-xl font-bold mt-3">Remove Dish?</h2>
+      <p class="text-neutral-400 text-sm mt-2">This will permanently remove <strong id="delete-dish-name" class="text-on-surface"></strong> from the menu.</p>
+    </div>
+    <div class="flex gap-3">
+      <button onclick="closeDeleteModal()" class="btn-secondary flex-1 text-xs py-2">Cancel</button>
+      <button id="delete-confirm-btn" class="btn-primary flex-1 text-xs py-2" style="background:radial-gradient(circle,#ff6b6b,#8b0000);">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="admin-toast" class="toast"></div>
+
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@400,0&display=swap" rel="stylesheet"/>
+
+<script>
+// ─── State ────────────────────────────────────────────────────────────────────
+let TOKEN = localStorage.getItem('uncle_admin_token') || '';
+let allDishes = [];
+let currentView = 'overview';
+let activeCatFilter = 'All';
+let editingId = null;
+let pendingDeleteId = null;
+
+// ─── API helpers ──────────────────────────────────────────────────────────────
+async function api(method, url, body) {
+  const opts = { method, headers: { 'Content-Type': 'application/json', 'x-admin-token': TOKEN } };
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch(url, opts);
+  return r.json();
+}
+
+// ─── Toast ────────────────────────────────────────────────────────────────────
+function toast(msg, type = 'success') {
+  const t = document.getElementById('admin-toast');
+  t.textContent = msg;
+  t.className = `toast ${type} show`;
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// ─── Login ────────────────────────────────────────────────────────────────────
+document.getElementById('pw-input').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+document.getElementById('login-btn').addEventListener('click', doLogin);
+
+async function doLogin() {
+  const pw = document.getElementById('pw-input').value;
+  const err = document.getElementById('login-err');
+  const btn = document.getElementById('login-label');
+  if (!pw) return;
+  btn.textContent = 'Verifying…';
+  document.getElementById('login-btn').disabled = true;
+  try {
+    const res = await fetch('/api/admin/login', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pw })
+    });
+    const json = await res.json();
+    if (json.success) {
+      TOKEN = json.token;
+      localStorage.setItem('uncle_admin_token', TOKEN);
+      showDashboard();
+    } else {
+      err.textContent = json.message || 'Incorrect password.';
+      err.classList.remove('hidden');
+      btn.textContent = 'Access Dashboard';
+      document.getElementById('login-btn').disabled = false;
+    }
+  } catch(e) {
+    err.textContent = 'Server error. Is the server running?';
+    err.classList.remove('hidden');
+    btn.textContent = 'Access Dashboard';
+    document.getElementById('login-btn').disabled = false;
+  }
+}
+
+async function showDashboard() {
+  // Validate token
+  if (TOKEN) {
+    const res = await api('GET', '/api/admin/menu');
+    if (!res.success) { TOKEN = ''; localStorage.removeItem('uncle_admin_token'); return; }
+    allDishes = res.data;
+  }
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('dashboard').classList.remove('hidden');
+  document.getElementById('dashboard').classList.add('flex');
+  setupAvailNote();
+  renderOverview();
+}
+
+// ─── Logout ───────────────────────────────────────────────────────────────────
+document.getElementById('logout-btn').addEventListener('click', async () => {
+  await api('POST', '/api/admin/logout');
+  TOKEN = '';
+  localStorage.removeItem('uncle_admin_token');
+  location.reload();
+});
+
+// ─── Auto-login if token saved ────────────────────────────────────────────────
+if (TOKEN) showDashboard().catch(() => {});
+
+// ─── Views ────────────────────────────────────────────────────────────────────
+function showView(v) {
+  currentView = v;
+  document.getElementById('view-overview').classList.add('hidden');
+  document.getElementById('view-menu').classList.add('hidden');
+  document.getElementById('view-' + v).classList.remove('hidden');
+  const titles = { overview: ['Dashboard Overview', 'Manage your imperial menu'], menu: ['Menu Items', 'Add, edit, or remove dishes'] };
+  document.getElementById('view-title').textContent = titles[v][0];
+  document.getElementById('view-sub').textContent = titles[v][1];
+  ['overview','menu'].forEach(n => {
+    document.getElementById('nav-' + n).classList.toggle('active', n === v);
+  });
+  if (v === 'menu') { buildCatFilters(); renderTable(); }
+  if (v === 'overview') renderOverview();
+}
+
+// ─── Overview ─────────────────────────────────────────────────────────────────
+function renderOverview() {
+  const total = allDishes.length;
+  const avail = allDishes.filter(d => d.available).length;
+  const unavail = total - avail;
+  const cats = [...new Set(allDishes.map(d => d.category))].length;
+
+  const stats = [
+    { label:'Total Dishes', value: total, icon:'restaurant_menu', color:'text-secondary' },
+    { label:'Available Now', value: avail, icon:'check_circle', color:'text-green-400' },
+    { label:'Unavailable', value: unavail, icon:'cancel', color:'text-primary' },
+    { label:'Categories', value: cats, icon:'category', color:'text-blue-400' },
+  ];
+  document.getElementById('stats-grid').innerHTML = stats.map(s => `
+    <div class="stat-card flex items-center gap-4">
+      <span class="material-symbols-outlined text-3xl ${s.color}">${s.icon}</span>
+      <div>
+        <div class="font-headline text-3xl font-bold ${s.color}">${s.value}</div>
+        <div class="text-neutral-500 text-xs uppercase tracking-wider">${s.label}</div>
+      </div>
+    </div>
+  `).join('');
+
+  const unavailDishes = allDishes.filter(d => !d.available);
+  const ul = document.getElementById('unavailable-list');
+  if (!unavailDishes.length) {
+    ul.innerHTML = '<p class="text-neutral-500 text-sm">✓ All dishes are currently available.</p>';
+  } else {
+    ul.innerHTML = unavailDishes.map(d => `
+      <div class="flex justify-between items-center py-3 border-b border-outline-variant/10 last:border-0">
+        <div>
+          <div class="font-semibold text-sm">${d.name}</div>
+          <div class="text-neutral-500 text-xs">${d.availabilityNote || 'No reason specified'} · <span class="text-neutral-600">${d.category}</span></div>
+        </div>
+        <button onclick="openAvailModal('${d.id}')" class="text-xs text-secondary hover:text-white border border-secondary/30 hover:border-white/30 px-3 py-1 rounded transition-colors">
+          Update
+        </button>
+      </div>
+    `).join('');
+  }
+}
+
+// ─── Category filters ─────────────────────────────────────────────────────────
+function buildCatFilters() {
+  const cats = ['All', ...new Set(allDishes.map(d => d.category))];
+  const container = document.getElementById('cat-filters');
+  container.innerHTML = cats.map(c => `
+    <button class="filter-btn ${c === activeCatFilter ? 'active' : ''}" data-cat="${c}" onclick="setCatFilter(this)">${c}</button>
+  `).join('');
+}
+
+function setCatFilter(btn) {
+  activeCatFilter = btn.dataset.cat;
+  document.querySelectorAll('#cat-filters .filter-btn').forEach(b => b.classList.toggle('active', b === btn));
+  renderTable();
+}
+
+// ─── Table ────────────────────────────────────────────────────────────────────
+function spiceDots(level) {
+  return [0,1,2,3].map(i => `<span class="spice-dot" style="background:${i<level?'#ff6b6b':'#353534'}"></span>`).join('');
+}
+
+function renderTable() {
+  const search = document.getElementById('search-input').value.toLowerCase();
+  let dishes = allDishes;
+  if (activeCatFilter !== 'All') dishes = dishes.filter(d => d.category === activeCatFilter);
+  if (search) dishes = dishes.filter(d => d.name.toLowerCase().includes(search) || d.description.toLowerCase().includes(search));
+
+  document.getElementById('table-count').textContent = `Showing ${dishes.length} of ${allDishes.length} dishes`;
+
+  if (!dishes.length) {
+    document.getElementById('menu-table-body').innerHTML = `
+      <tr><td colspan="5" class="text-center py-12 text-neutral-500">No dishes match your filter.</td></tr>`;
+    return;
+  }
+
+  document.getElementById('menu-table-body').innerHTML = dishes.map(d => `
+    <tr class="dish-row border-b border-outline-variant/8 last:border-0">
+      <td class="px-5 py-4">
+        <div class="flex items-center gap-3">
+          ${d.image ? `<img src="${d.image}" class="w-10 h-10 object-cover rounded" onerror="this.style.display='none'"/>` : `<div class="w-10 h-10 rounded bg-surface-container-high flex items-center justify-center text-neutral-600"><span class="material-symbols-outlined text-sm">restaurant</span></div>`}
+          <div>
+            <div class="font-semibold text-sm">${d.name}</div>
+            <div class="text-neutral-500 text-xs mt-0.5 max-w-xs truncate">${d.description}</div>
+          </div>
+        </div>
+      </td>
+      <td class="px-5 py-4 hidden md:table-cell">
+        <span class="text-xs text-neutral-400">${d.category}</span>
+      </td>
+      <td class="px-5 py-4 hidden lg:table-cell">
+        <span class="font-headline text-secondary">${d.price ? '$'+d.price : '—'}</span>
+      </td>
+      <td class="px-5 py-4 text-center">
+        <button onclick="openAvailModal('${d.id}')" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase ${d.available ? 'pill-available' : 'pill-unavailable'} transition-all hover:opacity-80">
+          ${d.available ? '<span class="material-symbols-outlined text-[12px]">check</span> Available' : '<span class="material-symbols-outlined text-[12px]">block</span> Unavailable'}
+        </button>
+      </td>
+      <td class="px-5 py-4 text-right">
+        <button onclick="openEditModal('${d.id}')" class="text-neutral-400 hover:text-secondary transition-colors p-1 mr-1" title="Edit">
+          <span class="material-symbols-outlined text-lg">edit</span>
+        </button>
+        <button onclick="openDeleteModal('${d.id}','${d.name.replace(/'/g,"\\'")}') " class="text-neutral-400 hover:text-primary transition-colors p-1" title="Delete">
+          <span class="material-symbols-outlined text-lg">delete</span>
+        </button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+// ─── Add / Edit Modal ─────────────────────────────────────────────────────────
+function setupAvailNote() {
+  const cb = document.getElementById('f-available');
+  const noteField = document.getElementById('avail-note-field');
+  cb.addEventListener('change', () => {
+    noteField.style.opacity = cb.checked ? '0.4' : '1';
+  });
+}
+
+function openAddModal() {
+  editingId = null;
+  document.getElementById('modal-title').textContent = 'Add New Dish';
+  document.getElementById('modal-submit-label').textContent = 'Add Dish';
+  document.getElementById('dish-form').reset();
+  document.getElementById('spice-val').textContent = '0';
+  document.getElementById('avail-note-field').style.opacity = '0.4';
+  showView('menu');
+  document.getElementById('dish-modal').classList.remove('hidden');
+  document.getElementById('dish-modal').classList.add('flex');
+}
+
+function openEditModal(id) {
+  editingId = id;
+  const d = allDishes.find(x => x.id === id);
+  if (!d) return;
+  document.getElementById('modal-title').textContent = 'Edit Dish';
+  document.getElementById('modal-submit-label').textContent = 'Save Changes';
+  document.getElementById('f-name').value = d.name || '';
+  document.getElementById('f-category').value = d.category || '';
+  document.getElementById('f-price').value = d.price || '';
+  document.getElementById('f-description').value = d.description || '';
+  document.getElementById('f-prepTime').value = d.prepTime || '';
+  document.getElementById('f-spiceLevel').value = d.spiceLevel || 0;
+  document.getElementById('spice-val').textContent = d.spiceLevel || 0;
+  document.getElementById('f-image').value = d.image || '';
+  document.getElementById('f-badge').value = d.badge || '';
+  document.getElementById('f-badgeType').value = d.badgeType || '';
+  document.getElementById('f-available').checked = d.available !== false;
+  document.getElementById('f-availabilityNote').value = d.availabilityNote || '';
+  document.getElementById('avail-note-field').style.opacity = d.available !== false ? '0.4' : '1';
+  document.getElementById('dish-modal').classList.remove('hidden');
+  document.getElementById('dish-modal').classList.add('flex');
+}
+
+function closeModal() {
+  document.getElementById('dish-modal').classList.add('hidden');
+  document.getElementById('dish-modal').classList.remove('flex');
+}
+
+document.getElementById('dish-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('modal-submit-btn');
+  btn.disabled = true;
+  const payload = {
+    name: document.getElementById('f-name').value.trim(),
+    category: document.getElementById('f-category').value,
+    price: document.getElementById('f-price').value || null,
+    description: document.getElementById('f-description').value.trim(),
+    prepTime: document.getElementById('f-prepTime').value.trim() || null,
+    spiceLevel: document.getElementById('f-spiceLevel').value,
+    image: document.getElementById('f-image').value.trim() || null,
+    badge: document.getElementById('f-badge').value.trim() || null,
+    badgeType: document.getElementById('f-badgeType').value || null,
+    available: document.getElementById('f-available').checked,
+    availabilityNote: document.getElementById('f-availabilityNote').value.trim() || null,
+  };
+
+  let res;
+  if (editingId) {
+    res = await api('PUT', `/api/admin/menu/${editingId}`, payload);
+    if (res.success) {
+      const idx = allDishes.findIndex(d => d.id === editingId);
+      if (idx !== -1) allDishes[idx] = res.data;
+      toast(`"${res.data.name}" updated successfully.`);
+    } else toast(res.message || 'Update failed.', 'error');
+  } else {
+    res = await api('POST', '/api/admin/menu', payload);
+    if (res.success) {
+      allDishes.push(res.data);
+      toast(`"${res.data.name}" added to the menu!`);
+    } else toast(res.message || 'Failed to add dish.', 'error');
+  }
+
+  btn.disabled = false;
+  if (res.success) { closeModal(); renderTable(); renderOverview(); buildCatFilters(); }
+});
+
+// ─── Availability quick modal ──────────────────────────────────────────────────
+let availTargetId = null;
+function openAvailModal(id) {
+  availTargetId = id;
+  const d = allDishes.find(x => x.id === id);
+  if (!d) return;
+  document.getElementById('avail-modal-title').textContent = 'Update Availability';
+  document.getElementById('avail-modal-dish').textContent = d.name;
+  document.getElementById('am-available').checked = d.available !== false;
+  document.getElementById('am-note').value = d.availabilityNote || '';
+  document.getElementById('avail-modal').classList.remove('hidden');
+  document.getElementById('avail-modal').classList.add('flex');
+}
+function closeAvailModal() {
+  document.getElementById('avail-modal').classList.add('hidden');
+  document.getElementById('avail-modal').classList.remove('flex');
+}
+document.getElementById('am-save').addEventListener('click', async () => {
+  const avail = document.getElementById('am-available').checked;
+  const note = document.getElementById('am-note').value.trim();
+  const res = await api('PATCH', `/api/admin/menu/${availTargetId}/availability`, { available: avail, availabilityNote: note || null });
+  if (res.success) {
+    const idx = allDishes.findIndex(d => d.id === availTargetId);
+    if (idx !== -1) allDishes[idx] = res.data;
+    toast(`${res.data.name} is now ${res.data.available ? 'available' : 'unavailable'}.`, res.data.available ? 'success' : 'error');
+    closeAvailModal(); renderTable(); renderOverview();
+  } else toast(res.message || 'Failed.', 'error');
+});
+
+// ─── Delete modal ─────────────────────────────────────────────────────────────
+function openDeleteModal(id, name) {
+  pendingDeleteId = id;
+  document.getElementById('delete-dish-name').textContent = '"' + name + '"';
+  document.getElementById('delete-modal').classList.remove('hidden');
+  document.getElementById('delete-modal').classList.add('flex');
+}
+function closeDeleteModal() {
+  document.getElementById('delete-modal').classList.add('hidden');
+  document.getElementById('delete-modal').classList.remove('flex');
+}
+document.getElementById('delete-confirm-btn').addEventListener('click', async () => {
+  const res = await api('DELETE', `/api/admin/menu/${pendingDeleteId}`);
+  if (res.success) {
+    allDishes = allDishes.filter(d => d.id !== pendingDeleteId);
+    toast(res.message, 'error');
+    closeDeleteModal(); renderTable(); renderOverview(); buildCatFilters();
+  } else toast(res.message || 'Delete failed.', 'error');
+});
+
+// Close modals on background click
+['dish-modal','avail-modal','delete-modal'].forEach(id => {
+  document.getElementById(id).addEventListener('click', function(e) {
+    if (e.target === this) {
+      if (id === 'dish-modal') closeModal();
+      else if (id === 'avail-modal') closeAvailModal();
+      else closeDeleteModal();
+    }
+  });
+});
+</script>
+</body>
+</html>
