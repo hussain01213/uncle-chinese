@@ -13,8 +13,29 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // ─── In-Memory "Database" ─────────────────────────────────────────────────────
 const reservations = [];
-// Keep menu as a mutable array so admin changes survive across requests
 const menuItems = require('./data/menu.js');
+
+// ─── Table Config ─────────────────────────────────────────────────────────────
+const TOTAL_TABLES = 3;
+const TABLES = [
+  { id: 1, name: 'Imperial Table 1', seats: 4 },
+  { id: 2, name: 'Imperial Table 2', seats: 6 },
+  { id: 3, name: 'Imperial Table 3', seats: 8 },
+];
+
+// Returns how many reservations exist for a given date+time combo
+function getBookingsForSlot(date, time) {
+  return reservations.filter(r => r.date === date && r.time === time);
+}
+
+// Assigns the next free table number for a slot (1-based), or null if full
+function assignTable(date, time) {
+  const booked = getBookingsForSlot(date, time).map(r => r.tableNumber);
+  for (let t = 1; t <= TOTAL_TABLES; t++) {
+    if (!booked.includes(t)) return t;
+  }
+  return null; // full
+}
 
 // ─── Page Routes ─────────────────────────────────────────────────────────────
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
@@ -32,6 +53,20 @@ app.get('/api/menu/:id', (req, res) => {
   const item = menuItems.find(m => m.id === req.params.id);
   if (!item) return res.status(404).json({ success: false, message: 'Dish not found.' });
   res.json({ success: true, data: item });
+});
+
+// ─── API: Slot Availability (public) ─────────────────────────────────────────
+// ?date=YYYY-MM-DD  → returns each time slot with booked count & isFull flag
+app.get('/api/availability', (req, res) => {
+  const { date } = req.query;
+  if (!date) return res.status(400).json({ success: false, message: 'date query param required.' });
+
+  const TIMES = ['18:00', '18:30', '19:00', '19:15', '19:30', '20:00', '20:30', '21:00'];
+  const slots = TIMES.map(time => {
+    const booked = getBookingsForSlot(date, time).length;
+    return { time, booked, total: TOTAL_TABLES, isFull: booked >= TOTAL_TABLES };
+  });
+  res.json({ success: true, date, slots });
 });
 
 // ─── API: Reservations ───────────────────────────────────────────────────────
@@ -56,7 +91,18 @@ app.post(
     }
 
     const { name, phone, email, date, time, guests, occasion, requests } = req.body;
+
+    // Check table availability
+    const tableNumber = assignTable(date, time);
+    if (tableNumber === null) {
+      return res.status(409).json({
+        success: false,
+        message: `Sorry — all ${TOTAL_TABLES} tables are fully booked for ${time} on this date. Please choose a different time or date.`
+      });
+    }
+
     const referenceId = 'UN-' + Math.random().toString(36).substr(2, 4).toUpperCase() + '-' + Math.random().toString(36).substr(2, 2).toUpperCase();
+    const tableInfo = TABLES.find(t => t.id === tableNumber);
 
     const reservation = {
       id: uuidv4(),
@@ -70,11 +116,13 @@ app.post(
       occasion: occasion || 'Casual Dining',
       requests: requests || '',
       status: 'Confirmed',
+      tableNumber,
+      tableName: tableInfo ? tableInfo.name : `Table ${tableNumber}`,
       createdAt: new Date().toISOString(),
     };
 
     reservations.push(reservation);
-    console.log(`[RESERVATION] ${referenceId} — ${name}, ${guests} guests on ${date} @ ${time}`);
+    console.log(`[RESERVATION] ${referenceId} — ${name}, ${guests} guests on ${date} @ ${time} → ${reservation.tableName}`);
 
     res.status(201).json({ success: true, data: reservation });
   }
@@ -104,7 +152,6 @@ app.post(
 // ─── ADMIN API ────────────────────────────────────────────────────────────────
 // ─────────────────────────────────────────────────────────────────────────────
 
-// In-memory session tokens
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'uncle2024';
 const adminSessions = new Set();
 
@@ -141,7 +188,7 @@ app.post('/api/admin/logout', requireAdmin, (req, res) => {
   res.json({ success: true, message: 'Logged out.' });
 });
 
-// Admin — Get all menu items (including unavailable)
+// Admin — Get all menu items
 app.get('/api/admin/menu', requireAdmin, (req, res) => {
   res.json({ success: true, data: menuItems });
 });
@@ -156,16 +203,11 @@ app.post('/api/admin/menu', requireAdmin, (req, res) => {
   const finalId = menuItems.find(m => m.id === slug) ? slug + '-' + Date.now() : slug;
 
   const newDish = {
-    id: finalId,
-    category,
-    name,
-    description,
+    id: finalId, category, name, description,
     price: price ? Number(price) : null,
     prepTime: prepTime || null,
     spiceLevel: spiceLevel !== undefined ? Number(spiceLevel) : 0,
-    image: image || null,
-    badge: badge || null,
-    badgeType: badgeType || null,
+    image: image || null, badge: badge || null, badgeType: badgeType || null,
     available: available !== false && available !== 'false',
     availabilityNote: availabilityNote || null,
     reviews: [],
@@ -193,7 +235,7 @@ app.put('/api/admin/menu/:id', requireAdmin, (req, res) => {
   res.json({ success: true, data: menuItems[idx] });
 });
 
-// Admin — Toggle availability quickly
+// Admin — Toggle availability
 app.patch('/api/admin/menu/:id/availability', requireAdmin, (req, res) => {
   const item = menuItems.find(m => m.id === req.params.id);
   if (!item) return res.status(404).json({ success: false, message: 'Dish not found.' });
@@ -213,6 +255,20 @@ app.delete('/api/admin/menu/:id', requireAdmin, (req, res) => {
   res.json({ success: true, message: `"${removed.name}" has been removed from the menu.` });
 });
 
+// Admin — Get all reservations (with table info)
+app.get('/api/admin/reservations', requireAdmin, (req, res) => {
+  res.json({ success: true, data: reservations, tables: TABLES, totalTables: TOTAL_TABLES });
+});
+
+// Admin — Cancel a reservation
+app.delete('/api/admin/reservations/:id', requireAdmin, (req, res) => {
+  const idx = reservations.findIndex(r => r.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ success: false, message: 'Reservation not found.' });
+  const removed = reservations.splice(idx, 1)[0];
+  console.log(`[ADMIN] Cancelled reservation: ${removed.referenceId} — ${removed.name}`);
+  res.json({ success: true, message: `Reservation for ${removed.name} cancelled.` });
+});
+
 // ─── 404 Handler ─────────────────────────────────────────────────────────────
 app.use((req, res) => {
   res.status(404).sendFile(path.join(__dirname, 'public', '404.html'));
@@ -224,5 +280,6 @@ app.listen(PORT, () => {
   console.log(`   Server running → http://localhost:${PORT}`);
   console.log(`   Admin panel  → http://localhost:${PORT}/admin`);
   console.log(`   Admin pass   → ${ADMIN_PASSWORD}`);
+  console.log(`   Tables       → ${TOTAL_TABLES} (max per time slot)`);
   console.log(`   Env: ${process.env.NODE_ENV || 'development'}\n`);
 });

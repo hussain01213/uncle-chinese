@@ -118,6 +118,9 @@
       <div class="sidebar-link" id="nav-menu" onclick="showView('menu')">
         <span class="material-symbols-outlined text-lg">menu_book</span> Menu Items
       </div>
+      <div class="sidebar-link" id="nav-reservations" onclick="showView('reservations')">
+        <span class="material-symbols-outlined text-lg">event_seat</span> Reservations
+      </div>
       <div class="sidebar-link" id="nav-add" onclick="openAddModal()">
         <span class="material-symbols-outlined text-lg">add_circle</span> Add Dish
       </div>
@@ -188,6 +191,47 @@
         </table>
       </div>
       <p class="text-neutral-600 text-xs mt-3 text-right" id="table-count"></p>
+    </div>
+
+      <!-- ── VIEW: Reservations ──────────────────────────────── -->
+    <div id="view-reservations" class="hidden">
+      <!-- Table status cards -->
+      <div class="grid grid-cols-3 gap-4 mb-8" id="table-status-cards"></div>
+
+      <!-- Filters -->
+      <div class="flex flex-wrap items-center gap-4 mb-6">
+        <div>
+          <label class="text-[10px] uppercase tracking-widest text-neutral-500 block mb-1">Filter by Date</label>
+          <input type="date" id="res-date-filter" class="search-input w-48" oninput="renderReservations()"/>
+        </div>
+        <div class="mt-5">
+          <button onclick="document.getElementById('res-date-filter').value='';renderReservations()" class="filter-btn">All Dates</button>
+        </div>
+        <div class="mt-5 ml-auto">
+          <button onclick="loadReservations()" class="filter-btn" style="border-color:rgba(233,195,73,0.3);color:#e9c349;">↻ Refresh</button>
+        </div>
+        <span id="res-count" class="mt-5 text-neutral-500 text-xs"></span>
+      </div>
+
+      <!-- Reservations table -->
+      <div class="glass-card rounded-xl border border-outline-variant/15 overflow-hidden">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-outline-variant/15 text-neutral-500 text-[10px] uppercase tracking-widest">
+              <th class="text-left px-5 py-4">Table</th>
+              <th class="text-left px-5 py-4">Guest</th>
+              <th class="text-left px-5 py-4 hidden md:table-cell">Date &amp; Time</th>
+              <th class="text-left px-5 py-4 hidden lg:table-cell">Guests</th>
+              <th class="text-left px-5 py-4 hidden lg:table-cell">Occasion</th>
+              <th class="text-left px-5 py-4 hidden xl:table-cell">Ref ID</th>
+              <th class="text-right px-5 py-4">Action</th>
+            </tr>
+          </thead>
+          <tbody id="reservations-table-body">
+            <tr><td colspan="7" class="text-center py-12 text-neutral-500">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
   </main>
@@ -420,15 +464,22 @@ function showView(v) {
   currentView = v;
   document.getElementById('view-overview').classList.add('hidden');
   document.getElementById('view-menu').classList.add('hidden');
+  document.getElementById('view-reservations').classList.add('hidden');
   document.getElementById('view-' + v).classList.remove('hidden');
-  const titles = { overview: ['Dashboard Overview', 'Manage your imperial menu'], menu: ['Menu Items', 'Add, edit, or remove dishes'] };
+  const titles = {
+    overview: ['Dashboard Overview', 'Manage your imperial menu'],
+    menu: ['Menu Items', 'Add, edit, or remove dishes'],
+    reservations: ['Reservations', 'Live table assignments & guest bookings']
+  };
   document.getElementById('view-title').textContent = titles[v][0];
   document.getElementById('view-sub').textContent = titles[v][1];
-  ['overview','menu'].forEach(n => {
-    document.getElementById('nav-' + n).classList.toggle('active', n === v);
+  ['overview','menu','reservations'].forEach(n => {
+    const el = document.getElementById('nav-' + n);
+    if (el) el.classList.toggle('active', n === v);
   });
   if (v === 'menu') { buildCatFilters(); renderTable(); }
   if (v === 'overview') renderOverview();
+  if (v === 'reservations') loadReservations();
 }
 
 // ─── Overview ─────────────────────────────────────────────────────────────────
@@ -687,6 +738,147 @@ document.getElementById('delete-confirm-btn').addEventListener('click', async ()
     }
   });
 });
-</script>
+
+// ─── Reservations ─────────────────────────────────────────────────────────────
+const TOTAL_TABLES = 3;
+const TABLE_NAMES = ['Imperial Table 1', 'Imperial Table 2', 'Imperial Table 3'];
+let allReservations = [];
+
+async function loadReservations() {
+  const res = await api('GET', '/api/admin/reservations');
+  if (!res.success) { toast('Failed to load reservations.', 'error'); return; }
+  allReservations = res.data;
+  renderTableStatusCards();
+  renderReservations();
+}
+
+function renderTableStatusCards() {
+  // Show today's bookings per table
+  const today = new Date().toISOString().split('T')[0];
+  const todayRes = allReservations.filter(r => r.date === today);
+  const container = document.getElementById('table-status-cards');
+  container.innerHTML = TABLE_NAMES.map((name, i) => {
+    const tableNum = i + 1;
+    const booked = todayRes.filter(r => r.tableNumber === tableNum);
+    const isFull = booked.length >= 1; // each table = 1 booking at a time per slot context
+    // Show next upcoming booking
+    const upcomingAll = allReservations
+      .filter(r => r.tableNumber === tableNum && r.date >= today)
+      .sort((a,b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
+    const next = upcomingAll[0];
+    return `
+      <div class="stat-card relative overflow-hidden">
+        <div class="flex items-start justify-between mb-3">
+          <div>
+            <div class="text-[10px] uppercase tracking-widest text-neutral-500 mb-1">Table ${tableNum}</div>
+            <div class="font-headline text-base font-bold">${name}</div>
+          </div>
+          <span class="material-symbols-outlined text-2xl ${booked.length > 0 ? 'text-primary' : 'text-green-400'}">${booked.length > 0 ? 'event_busy' : 'event_available'}</span>
+        </div>
+        <div class="text-xs text-neutral-400">
+          ${next
+            ? `<div class="text-secondary font-semibold">${next.time} · ${next.date}</div>
+               <div class="mt-0.5">${next.name} · ${next.guests}</div>`
+            : '<div class="text-neutral-600">No upcoming bookings</div>'
+          }
+        </div>
+        <div class="mt-3 h-1 rounded-full" style="background:#201f1f">
+          <div style="width:${Math.min((booked.length/1)*100,100)}%;height:100%;background:${booked.length>0?'#8b0000':'#2a6e2a'};border-radius:999px;transition:width 0.4s"></div>
+        </div>
+        <div class="text-[10px] text-neutral-600 mt-1">${booked.length} today</div>
+      </div>`;
+  }).join('');
+}
+
+function renderReservations() {
+  const dateFilter = document.getElementById('res-date-filter').value;
+  let list = allReservations;
+  if (dateFilter) list = list.filter(r => r.date === dateFilter);
+  list = [...list].sort((a,b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
+
+  document.getElementById('res-count').textContent = `${list.length} reservation${list.length !== 1 ? 's' : ''}`;
+
+  const tbody = document.getElementById('reservations-table-body');
+  if (!list.length) {
+    tbody.innerHTML = `<tr><td colspan="7" class="text-center py-14 text-neutral-500">
+      <span class="material-symbols-outlined text-4xl block mb-2">event_seat</span>
+      No reservations found${dateFilter ? ' for this date' : ''}.
+    </td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = list.map(r => {
+    const d = new Date(r.date + 'T12:00:00');
+    const dateStr = d.toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'});
+    const tableColor = ['','text-secondary','text-blue-400','text-green-400'][r.tableNumber] || 'text-neutral-400';
+    return `
+      <tr class="dish-row border-b border-outline-variant/8 last:border-0">
+        <td class="px-5 py-4">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-base ${tableColor}">table_restaurant</span>
+            <div>
+              <div class="font-bold text-sm ${tableColor}">${r.tableName || 'Table ' + r.tableNumber}</div>
+            </div>
+          </div>
+        </td>
+        <td class="px-5 py-4">
+          <div class="font-semibold text-sm">${r.name}</div>
+          <div class="text-neutral-500 text-xs">${r.phone}${r.email ? ' · ' + r.email : ''}</div>
+          ${r.requests ? `<div class="text-neutral-600 text-xs italic mt-0.5 max-w-xs truncate">"${r.requests}"</div>` : ''}
+        </td>
+        <td class="px-5 py-4 hidden md:table-cell">
+          <div class="font-semibold text-sm">${r.time}</div>
+          <div class="text-neutral-500 text-xs">${dateStr}</div>
+        </td>
+        <td class="px-5 py-4 hidden lg:table-cell">
+          <span class="text-sm">${r.guests}</span>
+        </td>
+        <td class="px-5 py-4 hidden lg:table-cell">
+          <span class="text-xs text-neutral-400">${r.occasion}</span>
+        </td>
+        <td class="px-5 py-4 hidden xl:table-cell">
+          <span class="font-mono text-xs text-secondary tracking-wider">${r.referenceId}</span>
+        </td>
+        <td class="px-5 py-4 text-right">
+          <button onclick="cancelReservation('${r.id}','${r.name.replace(/'/g,"\\'")}')"
+            class="text-neutral-400 hover:text-primary transition-colors p-1" title="Cancel Reservation">
+            <span class="material-symbols-outlined text-lg">cancel</span>
+          </button>
+        </td>
+      </tr>`;
+  }).join('');
+}
+
+const CANCEL_TABLE = { name: '', id: '' };
+function cancelReservation(id, name) {
+  CANCEL_TABLE.id = id; CANCEL_TABLE.name = name;
+  pendingDeleteId = id;
+  document.getElementById('delete-dish-name').textContent = `the reservation for "${name}"`;
+  document.getElementById('delete-modal').classList.remove('hidden');
+  document.getElementById('delete-modal').classList.add('flex');
+  // Override the confirm button temporarily
+  document.getElementById('delete-confirm-btn').onclick = async () => {
+    const res = await api('DELETE', `/api/admin/reservations/${id}`);
+    if (res.success) {
+      allReservations = allReservations.filter(r => r.id !== id);
+      toast(res.message, 'error');
+      closeDeleteModal();
+      renderTableStatusCards();
+      renderReservations();
+    } else toast(res.message || 'Failed.', 'error');
+    // Restore default
+    document.getElementById('delete-confirm-btn').onclick = null;
+    document.getElementById('delete-confirm-btn').addEventListener('click', defaultDeleteHandler);
+  };
+}
+const defaultDeleteHandler = async () => {
+  const res = await api('DELETE', `/api/admin/menu/${pendingDeleteId}`);
+  if (res.success) {
+    allDishes = allDishes.filter(d => d.id !== pendingDeleteId);
+    toast(res.message, 'error');
+    closeDeleteModal(); renderTable(); renderOverview(); buildCatFilters();
+  } else toast(res.message || 'Delete failed.', 'error');
+};
+document.getElementById('delete-confirm-btn').addEventListener('click', defaultDeleteHandler);</script>
 </body>
 </html>
