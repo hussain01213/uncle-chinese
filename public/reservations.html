@@ -99,9 +99,13 @@
           </div>
           <!-- Time Slots -->
           <div class="space-y-6">
-            <h3 class="text-xs uppercase tracking-widest text-outline">Available Seating</h3>
+            <div class="flex items-center justify-between">
+              <h3 class="text-xs uppercase tracking-widest text-outline">Available Seating</h3>
+              <span id="slot-loading" class="hidden text-[10px] text-outline tracking-widest"><span class="spinner" style="width:10px;height:10px;border-width:1.5px"></span> Checking...</span>
+            </div>
+            <p class="text-[10px] text-neutral-600 uppercase tracking-wider -mt-3">Select a date to see table availability</p>
             <div class="grid grid-cols-2 gap-3" id="time-slots">
-              <!-- Rendered by JS -->
+              <!-- Rendered by JS after date pick -->
             </div>
             <input type="hidden" id="selected-time" name="time"/>
           </div>
@@ -257,16 +261,17 @@
 // ─── Calendar Logic ───────────────────────────────────────────────────────────
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const TIMES = ['18:00','18:30','19:00','19:15','19:30','20:00','20:30','21:00'];
-const UNAVAILABLE_TIMES = new Set(['21:00']);
+const TOTAL_TABLES = 3;
 
 let viewYear, viewMonth, selectedDate = null, selectedTime = null;
+let slotData = {}; // { time: { booked, isFull } }
 
 function initCalendar() {
   const now = new Date();
   viewYear = now.getFullYear();
   viewMonth = now.getMonth();
   renderCalendar();
-  renderTimes();
+  renderTimes({}); // render empty placeholder slots
 }
 
 function renderCalendar() {
@@ -280,7 +285,6 @@ function renderCalendar() {
   const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
   const today = new Date(); today.setHours(0,0,0,0);
 
-  // Empty cells before first day
   for (let i = 0; i < firstDay; i++) {
     const empty = document.createElement('div');
     empty.className = 'cal-day empty';
@@ -291,11 +295,9 @@ function renderCalendar() {
     const date = new Date(viewYear, viewMonth, d);
     const isPast = date < today;
     const dateStr = `${viewYear}-${String(viewMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-
     const el = document.createElement('div');
     el.className = 'cal-day';
     el.textContent = d;
-
     if (isPast) {
       el.classList.add('past');
     } else {
@@ -306,29 +308,66 @@ function renderCalendar() {
   }
 }
 
-function selectDate(dateStr, el) {
+async function selectDate(dateStr, el) {
   selectedDate = dateStr;
+  selectedTime = null;
   document.getElementById('selected-date').value = dateStr;
+  document.getElementById('selected-time').value = '';
   document.querySelectorAll('.cal-day').forEach(d => d.classList.remove('selected'));
   el.classList.add('selected');
+
+  // Fetch live slot availability
+  const loader = document.getElementById('slot-loading');
+  loader.classList.remove('hidden');
+  try {
+    const res = await fetch(`/api/availability?date=${dateStr}`);
+    const json = await res.json();
+    slotData = {};
+    if (json.success) json.slots.forEach(s => { slotData[s.time] = s; });
+  } catch(e) { slotData = {}; }
+  loader.classList.add('hidden');
+
+  renderTimes(slotData);
   updateHint();
 }
 
-function renderTimes() {
+function renderTimes(data) {
   const container = document.getElementById('time-slots');
   container.innerHTML = '';
   TIMES.forEach(t => {
+    const info = data[t];
+    const isFull = info ? info.isFull : false;
+    const booked = info ? info.booked : 0;
+    const noDate = !selectedDate;
+
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.textContent = t;
-    const unavail = UNAVAILABLE_TIMES.has(t);
-    btn.className = `py-3 px-4 text-sm transition-all text-center rounded ${
-      unavail
-        ? 'bg-surface-container-high border border-transparent opacity-40 cursor-not-allowed'
-        : 'bg-surface-container-high hover:border-secondary border border-transparent'
+    btn.disabled = isFull || noDate;
+
+    const tablesLeft = TOTAL_TABLES - booked;
+    const barPct = noDate ? 0 : Math.round((booked / TOTAL_TABLES) * 100);
+    const barColor = isFull ? '#8b0000' : booked > 0 ? '#e9c349' : '#2a6e2a';
+
+    btn.innerHTML = `
+      <div class="flex justify-between items-center mb-1">
+        <span class="font-semibold text-sm">${t}</span>
+        ${isFull
+          ? '<span style="font-size:9px;background:rgba(139,0,0,0.3);color:#ffb4a8;border:1px solid rgba(255,180,168,0.3);padding:1px 5px;border-radius:3px;letter-spacing:0.08em">FULL</span>'
+          : noDate
+            ? '<span style="font-size:9px;color:#525252">— / 3</span>'
+            : `<span style="font-size:9px;color:#a3a3a3">${tablesLeft} left</span>`
+        }
+      </div>
+      <div style="height:3px;background:#201f1f;border-radius:2px;overflow:hidden">
+        <div style="height:100%;width:${barPct}%;background:${barColor};border-radius:2px;transition:width 0.4s"></div>
+      </div>`;
+
+    btn.className = `py-3 px-4 text-left transition-all rounded border ${
+      isFull || noDate
+        ? 'opacity-50 cursor-not-allowed border-transparent bg-surface-container-high'
+        : 'bg-surface-container-high hover:border-secondary border-transparent'
     }`;
-    if (unavail) { btn.disabled = true; return container.appendChild(btn); }
-    btn.addEventListener('click', () => selectTime(t, btn));
+    if (!isFull && !noDate) btn.addEventListener('click', () => selectTime(t, btn));
     container.appendChild(btn);
   });
 }
@@ -337,9 +376,16 @@ function selectTime(t, btn) {
   selectedTime = t;
   document.getElementById('selected-time').value = t;
   document.querySelectorAll('#time-slots button:not(:disabled)').forEach(b => {
-    b.className = 'py-3 px-4 text-sm transition-all text-center rounded bg-surface-container-high hover:border-secondary border border-transparent';
+    const info = slotData[b.querySelector('span.font-semibold')?.textContent?.trim()];
+    const booked = info ? info.booked : 0;
+    const barPct = Math.round((booked / TOTAL_TABLES) * 100);
+    const barColor = booked > 0 ? '#e9c349' : '#2a6e2a';
+    b.style.borderColor = '';
+    b.classList.remove('border-secondary','bg-surface-container-highest');
+    b.classList.add('bg-surface-container-high','border-transparent');
   });
-  btn.className = 'py-3 px-4 border border-secondary text-secondary bg-surface-container-highest text-sm text-center rounded';
+  btn.classList.remove('border-transparent','bg-surface-container-high');
+  btn.classList.add('border-secondary','bg-surface-container-highest');
   updateHint();
 }
 
@@ -398,10 +444,12 @@ document.getElementById('reservation-form').addEventListener('submit', async (e)
     const data = await res.json();
 
     if (!res.ok) {
-      const msg = data.errors ? data.errors.map(e => e.msg).join(', ') : 'Reservation failed.';
+      const msg = data.errors ? data.errors.map(e => e.msg).join(', ') : (data.message || 'Reservation failed.');
       showToast(msg, 'error');
       btn.innerHTML = '<span class="material-symbols-outlined mr-2">event_seat</span> Complete Reservation';
       btn.disabled = false;
+      // Refresh slots in case something changed
+      if (selectedDate) selectDate(selectedDate, document.querySelector('.cal-day.selected'));
       return;
     }
 
@@ -410,7 +458,7 @@ document.getElementById('reservation-form').addEventListener('submit', async (e)
     document.getElementById('confirm-ref').textContent = data.data.referenceId;
     document.getElementById('confirm-name').textContent = data.data.name;
     document.getElementById('confirm-details').textContent =
-      `${d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})} · ${data.data.time} · ${data.data.guests}`;
+      `${d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})} · ${data.data.time} · ${data.data.guests} · ${data.data.tableName}`;
 
     document.getElementById('guest-section').classList.add('hidden');
     document.getElementById('confirmation-card').classList.remove('hidden');
@@ -427,11 +475,11 @@ function resetForm() {
   document.getElementById('reservation-form').reset();
   document.getElementById('confirmation-card').classList.add('hidden');
   document.getElementById('guest-section').classList.remove('hidden');
-  selectedDate = null; selectedTime = null;
+  selectedDate = null; selectedTime = null; slotData = {};
   document.getElementById('selected-date').value = '';
   document.getElementById('selected-time').value = '';
   renderCalendar();
-  renderTimes();
+  renderTimes({});
   updateHint();
   const btn = document.getElementById('submit-btn');
   btn.innerHTML = '<span class="material-symbols-outlined mr-2">event_seat</span> Complete Reservation';
